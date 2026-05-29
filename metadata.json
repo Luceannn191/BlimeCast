@@ -1,0 +1,6 @@
+{
+  "name": "Blimcast",
+  "description": "Platform Pemesanan Sublimasi Kustom Kilat - Single Page Checkout ala Top-up Game",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
