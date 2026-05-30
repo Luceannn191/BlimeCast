@@ -96,7 +96,35 @@ export default function App() {
 
   const saveOrdersToLocalStorage = (updatedOrders: SublimationOrder[]) => {
     setOrders(updatedOrders);
-    localStorage.setItem('blimcast_orders', JSON.stringify(updatedOrders));
+    try {
+      localStorage.setItem('blimcast_orders', JSON.stringify(updatedOrders));
+    } catch (e) {
+      console.warn('Gagal menyimpan pesanan penuh ke localStorage (mungkin limit kapasitas terpenuhi):', e);
+      try {
+        // Buat salinan pesanan yang lebih ringan dengan mengganti Base64 murni dengan url placeholder
+        const lightweightOrders = updatedOrders.map(order => ({
+          ...order,
+          designs: order.designs?.map(d => ({
+            ...d,
+            previewUrl: d.previewUrl?.startsWith('data:') 
+              ? 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=200' 
+              : d.previewUrl
+          })),
+          items: order.items?.map(it => ({
+            ...it,
+            designs: it.designs?.map(d => ({
+              ...d,
+              previewUrl: d.previewUrl?.startsWith('data:') 
+                ? 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=200' 
+                : d.previewUrl
+            }))
+          }))
+        }));
+        localStorage.setItem('blimcast_orders', JSON.stringify(lightweightOrders));
+      } catch (innerErr) {
+        console.error('Gagal mencadangkan pesanan dengan aman ke localStorage:', innerErr);
+      }
+    }
   };
 
   // Dynamically map icon names to Lucide icons
@@ -321,31 +349,36 @@ export default function App() {
       designs: cart[0].designs
     };
 
-    setTimeout(() => {
-      const updatedList = [newOrder, ...orders];
-      saveOrdersToLocalStorage(updatedList);
-      
-      // Save current order success to show screen
-      setRecentOrderSuccess(newOrder);
-      setOrderSubmitting(false);
+     setTimeout(() => {
+       try {
+         const updatedList = [newOrder, ...orders];
+         saveOrdersToLocalStorage(updatedList);
+         
+         // Save current order success to show screen
+         setRecentOrderSuccess(newOrder);
+       } catch (error) {
+         console.error('Terjadi eror saat menyimpan pesanan:', error);
+       } finally {
+         setOrderSubmitting(false);
+       }
 
-      // Reset fields for next orders
-      setCart([]);
-      setSelectedProduct(null);
-      setQuantity(0);
-      setDesigns([]);
-      setGeneralNotes('');
-      
-      // Automatically scroll to very top success window
-      try {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } catch (scrollError) {
-        console.warn('Scroll failed or is blocked by sandbox:', scrollError);
-        try {
-          window.scrollTo(0, 0);
-        } catch (_) {}
-      }
-    }, 1200);
+       // Reset fields for next orders
+       setCart([]);
+       setSelectedProduct(null);
+       setQuantity(0);
+       setDesigns([]);
+       setGeneralNotes('');
+       
+       // Automatically scroll to very top success window
+       try {
+         window.scrollTo({ top: 0, behavior: 'smooth' });
+       } catch (scrollError) {
+         console.warn('Scroll failed or is blocked by sandbox:', scrollError);
+         try {
+           window.scrollTo(0, 0);
+         } catch (_) {}
+       }
+     }, 1200);
   };
 
   // Handle Track Orders (WA Check)
