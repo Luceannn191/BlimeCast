@@ -1382,12 +1382,26 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
                         <div className="flex items-center justify-between flex-wrap gap-2 pl-2">
                           <div>
                             <span className="text-[10px] text-slate-500 font-mono block">ID PESANAN</span>
-                            <span className="text-sm font-bold font-mono text-white flex items-center gap-1.5">
-                              {order.id}
-                              <span className="text-xs bg-slate-900 border border-slate-800 px-2 py-0.5 rounded font-bold text-slate-400 font-sans">
-                                {order.product.name}
+                            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                              <span className="text-sm font-bold font-mono text-white">
+                                {order.id}
                               </span>
-                            </span>
+                              {order.items && order.items.length > 0 ? (
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  {order.items.map((item, idx) => (
+                                    <span key={idx} className="text-[9px] bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded font-bold text-indigo-400 font-sans">
+                                      {item.product.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                order.product && (
+                                  <span className="text-[9px] bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded font-bold text-slate-400 font-sans">
+                                    {order.product.name}
+                                  </span>
+                                )
+                              )}
+                            </div>
                           </div>
 
                           <div className="text-right">
@@ -1451,20 +1465,50 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
 
                         {/* Order Detail Information inside Track order page */}
                         <div className="pl-2 pt-2 border-t border-slate-900 text-xs text-slate-400 space-y-2">
-                          <div className="flex justify-between">
-                            <span>Kuantitas x Produk:</span>
-                            <span className="text-white font-semibold font-mono">{order.quantity} {order.product.unit}</span>
-                          </div>
+                          {order.items && order.items.length > 0 ? (
+                            <div className="space-y-1.5">
+                              <span className="text-[9px] font-mono font-bold tracking-wider text-slate-500 uppercase block">Rincian Belanja</span>
+                              {order.items.map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center text-xs bg-slate-900/40 p-2 rounded-xl border border-slate-850/60">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded overflow-hidden border border-slate-800 shrink-0 bg-slate-950">
+                                      <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-200 font-bold font-sans block text-[11px] leading-tight">{item.product.name}</span>
+                                      <span className="text-[9px] text-indigo-400 font-mono block leading-none mt-0.5">
+                                        {item.designs.length} desain
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <span className="text-slate-300 font-bold font-mono text-[11px]">
+                                    {item.quantity} {item.product.unit}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            order.product && (
+                              <div className="flex justify-between">
+                                <span>Kuantitas x Produk:</span>
+                                <span className="text-white font-semibold font-mono">{order.quantity} {order.product.unit}</span>
+                              </div>
+                            )
+                          )}
                           
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-center pt-1.5 border-t border-slate-900/50">
                             <span>Total Pembayaran:</span>
-                            <span className="text-indigo-400 font-bold font-mono">Rp {order.totalPrice.toLocaleString('id-ID')}</span>
+                            <span className="text-indigo-400 font-extrabold font-mono text-sm">Rp {order.totalPrice.toLocaleString('id-ID')}</span>
                           </div>
 
-                          <div className="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-850 mt-1">
+                          <div className="flex justify-between items-center bg-slate-900/60 p-2.5 rounded-xl border border-slate-850 mt-1">
                             <span className="text-[10px] text-slate-400 flex items-center gap-1">
                               <FileText className="w-3.5 h-3.5 text-indigo-400" />
-                              <span>{order.designs.length} Berkas Mockup</span>
+                              <span>
+                                {order.items && order.items.length > 0
+                                  ? order.items.reduce((sum, item) => sum + item.designs.length, 0)
+                                  : order.designs?.length || 0} Berkas Mockup
+                              </span>
                             </span>
                             <span className="text-[9px] text-slate-500 font-mono">Invoice Date: {order.orderDate}</span>
                           </div>
