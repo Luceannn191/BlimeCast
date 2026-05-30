@@ -441,10 +441,19 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
   // Filter and search orders in Admin Dashboard
   const filteredOrders = orders.filter(order => {
     const matchesStatus = adminFilterStatus === 'Semua' || order.status === adminFilterStatus;
+    
+    const itemMatchesKeyword = order.items?.some(item => 
+      item.product.name.toLowerCase().includes(adminSearchTerm.toLowerCase())
+    ) || false;
+
+    const legacyMatchesKeyword = order.product?.name?.toLowerCase().includes(adminSearchTerm.toLowerCase()) || false;
+
     const matchesKeyword = 
       order.waNumber.includes(adminSearchTerm) || 
-      order.id.toLowerCase().includes(adminSearchTerm.toLowerCase()) || 
-      order.product.name.toLowerCase().includes(adminSearchTerm.toLowerCase());
+      order.id.toLowerCase().includes(adminSearchTerm.toLowerCase()) ||
+      itemMatchesKeyword ||
+      legacyMatchesKeyword;
+
     return matchesStatus && matchesKeyword;
   });
 
@@ -1683,8 +1692,25 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
                             </td>
 
                             <td className="p-4">
-                              <span className="font-bold text-slate-200">{order.product.name}</span>
-                              <span className="text-[10px] text-slate-400 block font-mono">{order.quantity} {order.product.unit}</span>
+                              {order.items && order.items.length > 0 ? (
+                                <div className="space-y-1.5 animate-fade-in">
+                                  {order.items.map((item, idx) => (
+                                    <div key={idx} className="bg-slate-950/60 p-2 rounded border border-slate-850 max-w-[200px]">
+                                      <span className="font-black text-slate-100 text-[11px] block truncate" title={item.product.name}>
+                                        {item.product.name}
+                                      </span>
+                                      <span className="text-[10px] text-indigo-400 font-mono font-semibold block">
+                                        {item.quantity} {item.product.unit}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="bg-slate-950/60 p-2 rounded border border-slate-850 max-w-[200px]">
+                                  <span className="font-black text-slate-100 text-[11px] block truncate">{order.product?.name || 'Produk'}</span>
+                                  <span className="text-[10px] text-slate-400 font-mono block">{order.quantity} {order.product?.unit || 'pcs'}</span>
+                                </div>
+                              )}
                             </td>
 
                             <td className="p-4 text-right">
@@ -1696,13 +1722,20 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
 
                             <td className="p-4">
                               {/* Open detail review trigger */}
-                              <button
-                                onClick={() => setSelectedAdminOrder(order)}
-                                className="px-3 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-md font-mono text-[10px] flex items-center gap-1 cursor-pointer"
-                              >
-                                <span>Lihat {order.designs.length} Desain</span>
-                                <ChevronRight className="w-3 h-3" />
-                              </button>
+                              {(() => {
+                                const totalDesigns = order.items && order.items.length > 0
+                                  ? order.items.reduce((sum, item) => sum + item.designs.length, 0)
+                                  : order.designs?.length || 0;
+                                return (
+                                  <button
+                                    onClick={() => setSelectedAdminOrder(order)}
+                                    className="px-3 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 rounded-md font-mono text-[10px] flex items-center justify-center gap-1 cursor-pointer w-full text-center font-bold"
+                                  >
+                                    <span>Lihat {totalDesigns} Desain</span>
+                                    <ChevronRight className="w-3 h-3 text-indigo-400" />
+                                  </button>
+                                );
+                              })()}
                             </td>
 
                             <td className="p-4">
@@ -1746,50 +1779,111 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
                         <h3 className="text-sm font-extrabold text-white uppercase tracking-wider font-mono">
                           Inspektur Berkas Mockup: Pesanan {selectedAdminOrder.id}
                         </h3>
-                        <p className="text-[10px] text-slate-400">
-                          Pelanggan: <span className="font-mono text-indigo-400">{selectedAdminOrder.waNumber}</span> — {selectedAdminOrder.product.name}
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          Pelanggan: <span className="font-mono text-indigo-400 font-bold">{selectedAdminOrder.waNumber}</span> — {selectedAdminOrder.items && selectedAdminOrder.items.length > 0 ? (
+                            <span className="text-indigo-300 font-bold">{selectedAdminOrder.items.map(it => `${it.product.name} (${it.quantity} ${it.product.unit})`).join(', ')}</span>
+                          ) : (
+                            <span className="text-indigo-300 font-bold">{selectedAdminOrder.product?.name || 'Produk'}</span>
+                          )}
                         </p>
                       </div>
 
                       <button
                         onClick={() => setSelectedAdminOrder(null)}
-                        className="text-xs bg-slate-900 border border-slate-800 hover:bg-slate-800 px-3 py-1 rounded text-slate-400 cursor-pointer"
+                        className="text-xs bg-slate-900 border border-slate-800 hover:bg-slate-850 px-3 py-1 rounded text-slate-400 cursor-pointer"
                       >
                         Tutup Editor
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {selectedAdminOrder.designs.map((design, dIdx) => (
-                        <div key={design.id} className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
-                          <div className="aspect-square w-full rounded-lg bg-slate-950 overflow-hidden relative border border-slate-800">
-                            <img
-                              src={design.previewUrl}
-                              alt={design.fileName}
-                              className="w-full h-full object-cover"
-                              referrerPolicy="no-referrer"
-                            />
-                            
-                            {/* Native resolution download hint mockup trigger button */}
-                            <a
-                              href={design.previewUrl}
-                              download={`Blimcast-${selectedAdminOrder.id}-Design${dIdx + 1}.${design.fileName.split('.').pop()}`}
-                              className="absolute bottom-2 right-2 px-2.5 py-1 bg-slate-950/90 text-white hover:bg-indigo-600 rounded text-[9px] font-mono tracking-tighter uppercase transition-colors"
-                            >
-                              Unduh File Asli
-                            </a>
-                          </div>
-
-                          <div className="space-y-1">
-                            <p className="text-[10px] text-indigo-300 font-mono font-bold uppercase">FILE #{dIdx + 1}: {design.fileName.substring(0, 15)}...</p>
-                            <div className="p-2.5 bg-slate-950 rounded-lg text-xs leading-relaxed text-slate-300 border border-slate-850 min-h-[50px]">
-                              <span className="text-[9px] text-indigo-400 uppercase font-mono block">Instruksi Cetak:</span>
-                              {design.notes || <span className="text-slate-600 italic">"Tidak ada catatan tertulis khusus."</span>}
+                    {selectedAdminOrder.items && selectedAdminOrder.items.length > 0 ? (
+                      <div className="space-y-6">
+                        {selectedAdminOrder.items.map((cartItem, itemIdx) => (
+                          <div key={cartItem.product.id || itemIdx} className="bg-slate-900/40 p-4 rounded-2xl border border-slate-850 space-y-3">
+                            <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                              <div className="w-6 h-6 rounded overflow-hidden border border-slate-705 bg-slate-900 shrink-0">
+                                <img src={cartItem.product.imageUrl} alt={cartItem.product.name} className="w-full h-full object-cover" />
+                              </div>
+                              <span className="text-[11px] font-black text-indigo-300 uppercase tracking-wider">
+                                {cartItem.product.name} ({cartItem.quantity} {cartItem.product.unit})
+                              </span>
                             </div>
+                            
+                            {cartItem.designs && cartItem.designs.length > 0 ? (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {cartItem.designs.map((design, dIdx) => (
+                                  <div key={design.id} className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-1.5">
+                                    <div className="aspect-square w-full rounded-lg bg-slate-900 overflow-hidden relative border border-slate-800">
+                                      <img
+                                        src={design.previewUrl}
+                                        alt={design.fileName}
+                                        className="w-full h-full object-cover"
+                                        referrerPolicy="no-referrer"
+                                      />
+                                      <a
+                                        href={design.previewUrl}
+                                        download={`Blimcast-${selectedAdminOrder.id}-${cartItem.product.id}-Design${dIdx + 1}.${design.fileName.split('.').pop()}`}
+                                        className="absolute bottom-2 right-2 px-2.5 py-1 bg-slate-900/95 text-white hover:bg-indigo-600 rounded text-[9px] font-mono tracking-tighter uppercase transition-colors"
+                                      >
+                                        Unduh File Asli
+                                      </a>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-[10px] text-indigo-300 font-mono font-bold uppercase truncate" title={design.fileName}>
+                                        FILE #{dIdx + 1}: {design.fileName.length > 15 ? `${design.fileName.substring(0, 15)}...` : design.fileName}
+                                      </p>
+                                      <div className="p-2 bg-slate-900 rounded-lg text-xs leading-relaxed text-slate-300 border border-slate-850 min-h-[45px]">
+                                        <span className="text-[9px] text-indigo-400 uppercase font-mono block">Instruksi Cetak:</span>
+                                        {design.notes || <span className="text-slate-600 italic">"Tidak ada catatan tertulis khusus."</span>}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-amber-400 italic pl-2">⚠️ Tidak ada file desain kustom diunggah untuk item ini.</div>
+                            )}
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {selectedAdminOrder.designs && selectedAdminOrder.designs.length > 0 ? (
+                          selectedAdminOrder.designs.map((design, dIdx) => (
+                            <div key={design.id} className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
+                              <div className="aspect-square w-full rounded-lg bg-slate-950 overflow-hidden relative border border-slate-800">
+                                <img
+                                  src={design.previewUrl}
+                                  alt={design.fileName}
+                                  className="w-full h-full object-cover"
+                                  referrerPolicy="no-referrer"
+                                />
+                                
+                                <a
+                                  href={design.previewUrl}
+                                  download={`Blimcast-${selectedAdminOrder.id}-Design${dIdx + 1}.${design.fileName.split('.').pop()}`}
+                                  className="absolute bottom-2 right-2 px-2.5 py-1 bg-slate-950/90 text-white hover:bg-indigo-600 rounded text-[9px] font-mono tracking-tighter uppercase transition-colors"
+                                >
+                                  Unduh File Asli
+                                </a>
+                              </div>
+
+                              <div className="space-y-1">
+                                <p className="text-[10px] text-indigo-300 font-mono font-bold uppercase truncate" title={design.fileName}>
+                                  FILE #{dIdx + 1}: {design.fileName.substring(0, 15)}...
+                                </p>
+                                <div className="p-2.5 bg-slate-950 rounded-lg text-xs leading-relaxed text-slate-300 border border-slate-850 min-h-[50px]">
+                                  <span className="text-[9px] text-indigo-400 uppercase font-mono block">Instruksi Cetak:</span>
+                                  {design.notes || <span className="text-slate-600 italic">"Tidak ada catatan tertulis khusus."</span>}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-4 text-slate-500 italic col-span-full">Tidak ada desain diunggah.</div>
+                        )}
+                      </div>
+                    )}
 
                     <div className="pt-4 border-t border-slate-850 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                       <div className="text-xs">
