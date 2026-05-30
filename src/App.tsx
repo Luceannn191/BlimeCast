@@ -337,7 +337,14 @@ export default function App() {
       setGeneralNotes('');
       
       // Automatically scroll to very top success window
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      try {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (scrollError) {
+        console.warn('Scroll failed or is blocked by sandbox:', scrollError);
+        try {
+          window.scrollTo(0, 0);
+        } catch (_) {}
+      }
     }, 1200);
   };
 
@@ -630,20 +637,53 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-850 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Nama Produk:</span>
-                  <span className="text-white font-medium">{recentOrderSuccess.product.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Jumlah / Kuantitas:</span>
-                  <span className="text-white font-semibold font-mono">{recentOrderSuccess.quantity} {recentOrderSuccess.product.unit}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Unggahan Gambar:</span>
-                  <span className="text-indigo-400 font-semibold font-mono">{recentOrderSuccess.designs.length} Desain</span>
-                </div>
-                <div className="flex justify-between pt-1 font-mono">
+              <div className="pt-3 border-t border-slate-850 space-y-3 text-sm">
+                {recentOrderSuccess.items && recentOrderSuccess.items.length > 0 ? (
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-slate-500 font-mono tracking-wider uppercase block mb-1">Rincian Belanja:</span>
+                    {recentOrderSuccess.items.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-xs bg-slate-950 p-2.5 rounded-xl border border-slate-850">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded overflow-hidden border border-slate-800 bg-slate-900 shrink-0">
+                            <img src={item.product?.imageUrl} alt={item.product?.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div>
+                            <span className="text-slate-200 font-bold block">{item.product?.name || 'Produk'}</span>
+                            <span className="text-[10px] text-indigo-400 font-mono block">
+                              {item.quantity} {item.product?.unit || 'pcs'} — {item.designs?.length || 0} Desain
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-slate-300 font-bold font-mono text-xs">
+                          Rp {(item.product ? item.product.price * item.quantity : 0).toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    {recentOrderSuccess.product && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Nama Produk:</span>
+                        <span className="text-white font-medium">{recentOrderSuccess.product.name}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Jumlah / Kuantitas:</span>
+                      <span className="text-white font-semibold font-mono">
+                        {recentOrderSuccess.quantity} {recentOrderSuccess.product?.unit || 'pcs'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Unggahan Gambar:</span>
+                      <span className="text-indigo-400 font-semibold font-mono">
+                        {recentOrderSuccess.designs?.length || 0} Desain
+                      </span>
+                    </div>
+                  </>
+                )}
+                
+                <div className="flex justify-between pt-1 font-mono text-xs">
                   <span className="text-slate-400">Biaya Administrasi:</span>
                   <span className="text-slate-300">
                     Rp {(PAYMENT_METHODS.find(p => p.id === recentOrderSuccess.paymentMethod)?.fee || 0).toLocaleString('id-ID')}
