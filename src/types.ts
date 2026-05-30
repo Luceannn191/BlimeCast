@@ -8,7 +8,8 @@ export interface SublimationProduct {
   minOrder: number;
   estimatedTime: string;
   description: string;
-  iconName: string; // Used to select Lucide icon dynamically
+  imageUrl: string; // Product photo URL that spans card width
+  iconName: string; // Kept for accessory usage if needed
   badgeColor: string;
 }
 
@@ -19,15 +20,25 @@ export interface DesignUpload {
   notes: string; // Custom instruction for this specific design
 }
 
-export interface SublimationOrder {
-  id: string;
-  waNumber: string; // Tracks user's order
+export interface CartItem {
+  id: string; // Unique ID for this cart line item (usually product.id)
   product: SublimationProduct;
   quantity: number;
   designs: DesignUpload[];
+}
+
+export interface SublimationOrder {
+  id: string;
+  waNumber: string; // Tracks user's order
+  items: CartItem[]; // Support multiple items inside one order
   totalPrice: number;
   notes: string; // General order notes
   orderDate: string;
   status: OrderStatus;
   paymentMethod: string;
+  
+  // Legacy fields kept optional for backward compatibility
+  product?: SublimationProduct;
+  quantity?: number;
+  designs?: DesignUpload[];
 }

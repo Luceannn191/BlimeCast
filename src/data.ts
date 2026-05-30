@@ -9,6 +9,7 @@ export const SUBLIMATION_PRODUCTS: SublimationProduct[] = [
     minOrder: 1,
     estimatedTime: '1-2 Hari',
     description: 'Mug keramik premium tahan panas, coating sublimasi kinclong, print full color.',
+    imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&q=80&w=400',
     iconName: 'CupSoda',
     badgeColor: 'bg-emerald-500/25 text-emerald-400 border border-emerald-500/30',
   },
@@ -20,6 +21,7 @@ export const SUBLIMATION_PRODUCTS: SublimationProduct[] = [
     minOrder: 5,
     estimatedTime: '2-3 Hari',
     description: 'Akrilik tebal 3mm, potong presisi laser, cetak 2 sisi awet tidak gampang baret.',
+    imageUrl: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&q=80&w=400',
     iconName: 'KeyRound',
     badgeColor: 'bg-indigo-500/25 text-indigo-400 border border-indigo-500/30',
   },
@@ -31,6 +33,7 @@ export const SUBLIMATION_PRODUCTS: SublimationProduct[] = [
     minOrder: 10,
     estimatedTime: '1 Hari',
     description: 'Sticker vinyl dengan potongan mengikuti bentuk luar desain (Die Cut), anti air & laminasi.',
+    imageUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=400',
     iconName: 'Sparkles',
     badgeColor: 'bg-amber-500/25 text-amber-400 border border-amber-500/30',
   },
@@ -42,6 +45,7 @@ export const SUBLIMATION_PRODUCTS: SublimationProduct[] = [
     minOrder: 2,
     estimatedTime: '1 Hari',
     description: 'Sticker lembaran A4 setengah terpotong, gampang dikelupas. Kualitas cetak ultra-high resolution.',
+    imageUrl: 'https://images.unsplash.com/photo-1572375995501-4b0894dbe054?auto=format&fit=crop&q=80&w=400',
     iconName: 'Layers',
     badgeColor: 'bg-rose-500/25 text-rose-400 border border-rose-500/30',
   },
@@ -53,6 +57,7 @@ export const SUBLIMATION_PRODUCTS: SublimationProduct[] = [
     minOrder: 10,
     estimatedTime: '1-2 Hari',
     description: 'Pin peniti ukuran 44mm atau 58mm dengan laminasi glossy/doff, anti karat.',
+    imageUrl: 'https://images.unsplash.com/photo-1551269901-5c5e14c30d74?auto=format&fit=crop&q=80&w=400',
     iconName: 'Disc',
     badgeColor: 'bg-cyan-500/25 text-cyan-400 border border-cyan-500/30',
   },
@@ -64,6 +69,7 @@ export const SUBLIMATION_PRODUCTS: SublimationProduct[] = [
     minOrder: 5,
     estimatedTime: '2-3 Hari',
     description: 'Tali ID Card lebar 2cm print 2 sisi sublime full color, bahan tisu premium plus paku & stopper.',
+    imageUrl: 'https://images.unsplash.com/photo-1622323719125-9c5957be9fde?auto=format&fit=crop&q=80&w=400',
     iconName: 'IdCard',
     badgeColor: 'bg-violet-500/25 text-violet-400 border border-violet-500/30',
   },
@@ -75,6 +81,7 @@ export const SUBLIMATION_PRODUCTS: SublimationProduct[] = [
     minOrder: 1,
     estimatedTime: '3-4 Hari',
     description: 'Kaos polyester premium, sublimasi full-print melingkar tajam, tidak luntur, adem di kulit.',
+    imageUrl: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&q=80&w=400',
     iconName: 'Shirt',
     badgeColor: 'bg-teal-500/25 text-teal-400 border border-teal-500/30',
   },
@@ -86,6 +93,7 @@ export const SUBLIMATION_PRODUCTS: SublimationProduct[] = [
     minOrder: 1,
     estimatedTime: '2 Hari',
     description: 'Mousepad bahan karet alam bertekstur speed, cetak sublimasi warna cemerlang berkualitas gamers.',
+    imageUrl: 'https://images.unsplash.com/photo-1616440347437-b1c73416efc2?auto=format&fit=crop&q=80&w=400',
     iconName: 'RectangleEllipsis',
     badgeColor: 'bg-pink-500/25 text-pink-400 border border-pink-500/30',
   },
@@ -97,6 +105,7 @@ export const SUBLIMATION_PRODUCTS: SublimationProduct[] = [
     minOrder: 2,
     estimatedTime: '2-3 Hari',
     description: 'Totebag bahan Canvas dengan strap kuat, sublimasi cetak tajam sisi depan.',
+    imageUrl: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=400',
     iconName: 'ShoppingBag',
     badgeColor: 'bg-blue-500/25 text-blue-400 border border-blue-500/30',
   },
@@ -108,6 +117,7 @@ export const SUBLIMATION_PRODUCTS: SublimationProduct[] = [
     minOrder: 3,
     estimatedTime: '1-2 Hari',
     description: 'ID Card bahan PVC standard ATM, cetak sublimasi anti pudar berkilau anti gores.',
+    imageUrl: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&q=80&w=400',
     iconName: 'WalletCards',
     badgeColor: 'bg-lime-500/25 text-lime-400 border border-lime-500/30',
   },
@@ -140,6 +150,27 @@ export const INITIAL_ORDERS: SublimationOrder[] = [
         notes: 'Slogan ditaruh di sisi sebaliknya (belakang logo).',
       },
     ],
+    items: [
+      {
+        id: 'mug-custom',
+        product: SUBLIMATION_PRODUCTS[0],
+        quantity: 4,
+        designs: [
+          {
+            id: 'img1',
+            fileName: 'char_logo_raw.png',
+            previewUrl: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?auto=format&fit=crop&q=80&w=200',
+            notes: 'Logo ditaruh di tengah mug, beri background putih polos.',
+          },
+          {
+            id: 'img2',
+            fileName: 'typo_slogan.jpg',
+            previewUrl: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&q=80&w=200',
+            notes: 'Slogan ditaruh di sisi sebaliknya (belakang logo).',
+          },
+        ]
+      }
+    ],
     totalPrice: 100000,
     notes: 'Kirim pakai pelindung bubble wrap tebal ya min.',
     orderDate: '2026-05-28 14:22',
@@ -159,6 +190,21 @@ export const INITIAL_ORDERS: SublimationOrder[] = [
         notes: 'Potong presisi mengikuti bentuk karakter cibi ini.',
       }
     ],
+    items: [
+      {
+        id: 'sticker-diecut',
+        product: SUBLIMATION_PRODUCTS[2],
+        quantity: 50,
+        designs: [
+          {
+            id: 'ganci1',
+            fileName: 'sticker_vibe.jpg',
+            previewUrl: 'https://images.unsplash.com/photo-1572375995501-4b0894dbe054?auto=format&fit=crop&q=80&w=200',
+            notes: 'Potong presisi mengikuti bentuk karakter cibi ini.',
+          }
+        ]
+      }
+    ],
     totalPrice: 75000,
     notes: 'Bahan vinyl laminasi doff.',
     orderDate: '2026-05-29 08:15',
@@ -176,6 +222,21 @@ export const INITIAL_ORDERS: SublimationOrder[] = [
         fileName: 'lanyard_corporate_pattern.png',
         previewUrl: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&q=80&w=200',
         notes: 'Print bolak-balik dengan striping putih abu-abu di tepi.',
+      }
+    ],
+    items: [
+      {
+        id: 'lanyard-custom',
+        product: SUBLIMATION_PRODUCTS[5],
+        quantity: 10,
+        designs: [
+          {
+            id: 'lany1',
+            fileName: 'lanyard_corporate_pattern.png',
+            previewUrl: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&q=80&w=200',
+            notes: 'Print bolak-balik dengan striping putih abu-abu di tepi.',
+          }
+        ]
       }
     ],
     totalPrice: 152000, // + admin fee Virtual Account

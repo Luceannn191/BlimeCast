@@ -37,11 +37,12 @@ import {
 } from 'lucide-react';
 
 import { SUBLIMATION_PRODUCTS, PAYMENT_METHODS, INITIAL_ORDERS } from './data';
-import { SublimationProduct, SublimationOrder, DesignUpload, OrderStatus } from './types';
+import { SublimationProduct, SublimationOrder, DesignUpload, OrderStatus, CartItem } from './types';
 
 export default function App() {
   // State management with localStorage persistence for rich prototype experience
   const [orders, setOrders] = useState<SublimationOrder[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<SublimationProduct | null>(null);
   const [waNumber, setWaNumber] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(0);
@@ -169,47 +170,112 @@ export default function App() {
     }
   };
 
-  // Update specific instruction notes for a design
-  const updateDesignNote = (id: string, noteText: string) => {
-    setDesigns(prev => prev.map(d => d.id === id ? { ...d, notes: noteText } : d));
-  };
-
-  // Delete uploaded design file
-  const removeDesign = (id: string) => {
-    setDesigns(prev => prev.filter(d => d.id !== id));
-  };
-
-  // Quantity controllers
-  const adjustQuantity = (val: number) => {
-    if (!selectedProduct) return;
-    const nextVal = quantity + val;
-    if (nextVal >= selectedProduct.minOrder) {
-      setQuantity(nextVal);
-    }
-  };
-
+  // NEW: Cart-based handlers
   const handleProductSelect = (product: SublimationProduct) => {
     setSelectedProduct(product);
-    setQuantity(Math.max(quantity, product.minOrder));
-    // Auto scroll down to step 2/3
+    setCart(prev => {
+      const match = prev.find(item => item.product.id === product.id);
+      if (match) return prev; // already selected/in cart
+      return [...prev, {
+        id: product.id,
+        product,
+        quantity: product.minOrder,
+        designs: []
+      }];
+    });
     scrollTo(step2Ref);
   };
 
-  // Calculations
-  const calculatedSubtotal = selectedProduct ? selectedProduct.price * quantity : 0;
-  
-  // Wholesales Discount logic ala gamified order checkout
-  const discountMultiplier = quantity >= 100 ? 0.15 : quantity >= 50 ? 0.10 : quantity >= 20 ? 0.05 : 0;
-  const discountAmount = Math.round(calculatedSubtotal * discountMultiplier);
-  const paymentFee = PAYMENT_METHODS.find(p => p.id === selectedPayment)?.fee || 0;
-  const finalTotalPrice = calculatedSubtotal - discountAmount + paymentFee;
+  const adjustCartItemQuantity = (productId: string, val: number) => {
+    setCart(prev => {
+      const match = prev.find(item => item.product.id === productId);
+      if (!match) return prev;
+      const nextVal = match.quantity + val;
+      if (nextVal <= 0 || (val < 0 && match.quantity === match.product.minOrder)) {
+        // Remove from cart if reduced below minOrder
+        return prev.filter(item => item.product.id !== productId);
+      }
+      return prev.map(item => item.product.id === productId ? { ...item, quantity: nextVal } : item);
+    });
+  };
 
+  const handleImageChangeForCartItem = (productId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadLoading(true);
+
+    const readerPromises = Array.from(files).map((rawFile) => {
+      const file = rawFile as File;
+      return new Promise<DesignUpload>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve({
+            id: 'img-' + Math.random().toString(36).substring(2, 9),
+            fileName: file.name,
+            previewUrl: reader.result as string,
+            notes: ''
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(readerPromises).then((newDesigns) => {
+      setCart(prev => prev.map(item => {
+        if (item.product.id === productId) {
+          return { ...item, designs: [...item.designs, ...newDesigns] };
+        }
+        return item;
+      }));
+      setUploadLoading(false);
+    });
+  };
+
+  const removeDesignFromCartItem = (productId: string, designId: string) => {
+    setCart(prev => prev.map(item => {
+      if (item.product.id === productId) {
+        return { ...item, designs: item.designs.filter(d => d.id !== designId) };
+      }
+      return item;
+    }));
+  };
+
+  const updateDesignNoteForCartItem = (productId: string, designId: string, notes: string) => {
+    setCart(prev => prev.map(item => {
+      if (item.product.id === productId) {
+        return {
+          ...item,
+          designs: item.designs.map(d => d.id === designId ? { ...d, notes } : d)
+        };
+      }
+      return item;
+    }));
+  };
+
+  // Calculations based on full multi-product cart
+  const calculatedSubtotal = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+  
+  const getDiscountForQty = (qty: number) => {
+    return qty >= 100 ? 0.15 : qty >= 50 ? 0.10 : qty >= 20 ? 0.05 : 0;
+  };
+
+  const discountAmount = cart.reduce((acc, item) => {
+    const sub = item.product.price * item.quantity;
+    const rate = getDiscountForQty(item.quantity);
+    return acc + Math.round(sub * rate);
+  }, 0);
+
+  const paymentFee = PAYMENT_METHODS.find(p => p.id === selectedPayment)?.fee || 0;
+  const finalTotalPrice = Math.max(0, calculatedSubtotal - discountAmount + paymentFee);
+
+  // Handle Order Submit
   // Handle Order Submit
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedProduct) {
-      alert('Harap pilih produk sublimasi terlebih dahulu.');
+    if (cart.length === 0) {
+      alert('Keranjang belanja Anda kosong. Silakan pilih produk terlebih dahulu.');
       return;
     }
 
@@ -218,8 +284,10 @@ export default function App() {
       return;
     }
 
-    if (designs.length === 0) {
-      alert('Harap unggah minimal 1 file gambar desain kustom Anda.');
+    // Ensure all items in the cart have at least 1 design uploaded
+    const missingDesign = cart.find(item => item.designs.length === 0);
+    if (missingDesign) {
+      alert(`Harap unggah minimal 1 file gambar desain untuk produk: ${missingDesign.product.name}`);
       return;
     }
 
@@ -240,14 +308,17 @@ export default function App() {
     const newOrder: SublimationOrder = {
       id: newOrderId,
       waNumber: formattedWa,
-      product: selectedProduct,
-      quantity: quantity,
-      designs: designs,
+      items: cart,
       totalPrice: finalTotalPrice,
       notes: generalNotes,
       orderDate: formattedDate,
       status: 'Menunggu Pembayaran',
-      paymentMethod: selectedPayment
+      paymentMethod: selectedPayment,
+      
+      // Fallback fields for legacy compatibility
+      product: cart[0].product,
+      quantity: cart[0].quantity,
+      designs: cart[0].designs
     };
 
     setTimeout(() => {
@@ -259,6 +330,7 @@ export default function App() {
       setOrderSubmitting(false);
 
       // Reset fields for next orders
+      setCart([]);
       setSelectedProduct(null);
       setQuantity(0);
       setDesigns([]);
@@ -340,12 +412,22 @@ export default function App() {
 
   // Helper to compose dynamic WA API message links
   const getWhatsAppMessageLink = (order: SublimationOrder) => {
+    let itemsText = '';
+    if (order.items && order.items.length > 0) {
+      itemsText = order.items.map((item, index) => 
+        `- *Item #${index + 1}:* ${item.product.name} (${item.quantity} ${item.product.unit}) / ${item.designs.length} Desain`
+      ).join('\n');
+    } else {
+      const prodName = order.product?.name || 'Produk';
+      const prodUnit = order.product?.unit || 'unit';
+      const designCount = order.designs?.length || 0;
+      itemsText = `- *Item:* ${prodName} (${order.quantity} ${prodUnit}) / ${designCount} Desain`;
+    }
+
     const text = `Halo Admin Blimcast, saya mau konfirmasi pesanan kustom sublimasi saya.
     
 📌 *ID PESANAN:* ${order.id}
-🛍️ *PRODUK:* ${order.product.name}
-🔢 *JUMLAH:* ${order.quantity} ${order.product.unit}
-🏷️ *JUMLAH DESAIN UNGGAH:* ${order.designs.length} Desain
+${itemsText}
 💵 *TOTAL TAGIHAN:* Rp ${order.totalPrice.toLocaleString('id-ID')}
 📱 *NOMOR WA:* ${order.waNumber}
 💳 *METODE:* ${PAYMENT_METHODS.find(p => p.id === order.paymentMethod)?.name || order.paymentMethod}
@@ -729,7 +811,8 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
                   {/* Grid 10 Products Ala Portal Top-up */}
                   <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {SUBLIMATION_PRODUCTS.map((product, idx) => {
-                      const isSelected = selectedProduct?.id === product.id;
+                      const cartItem = cart.find(item => item.product.id === product.id);
+                      const isSelected = !!cartItem;
                       
                       return (
                         <div
@@ -744,26 +827,56 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
                         >
                           {/* Selected marker glow badge */}
                           {isSelected && (
-                            <div className="absolute top-0 right-0 bg-indigo-500 text-white px-2 py-0.5 rounded-bl-xl text-[9px] font-mono font-black animate-pulse">
+                            <div className="absolute top-0 right-0 bg-indigo-500 text-white px-2 py-0.5 rounded-bl-xl text-[9px] font-mono font-black animate-pulse z-10">
                               TERPILIH
                             </div>
                           )}
 
-                          {/* Numeration tag */}
-                          <div className="text-[10px] text-slate-600 font-mono group-hover:text-indigo-400 font-bold transition-colors">
-                            {String(idx + 1).padStart(2, '0')}.
-                          </div>
-
-                          {/* Product visual representation mapping */}
-                          <div className="my-3 flex items-center justify-center">
-                            <div className={`p-4 rounded-xl transition-all duration-300 ${
-                              isSelected 
-                                ? 'bg-indigo-500/20 text-indigo-300 scale-110 shadow-lg' 
-                                : 'bg-slate-900 text-slate-400 group-hover:text-slate-200 group-hover:bg-slate-800'
-                            }`}>
-                              {renderProductIcon(product.iconName, "w-8 h-8")}
+                          {/* Beautiful full-width product mockup image scaling on hover */}
+                          <div className="w-full h-32 overflow-hidden rounded-xl bg-slate-950 mb-3 border border-slate-900 relative group-hover:border-indigo-500/40 transition-all">
+                            <img
+                              src={product.imageUrl}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              referrerPolicy="no-referrer"
+                            />
+                            {/* Floating numbering badge */}
+                            <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/80 backdrop-blur-sm text-[9px] text-indigo-400 font-mono font-bold border border-slate-800/80">
+                              {String(idx + 1).padStart(2, '0')}
                             </div>
                           </div>
+
+                          {/* Quantity selectors directly under the image card */}
+                          {isSelected && cartItem && (
+                            <div 
+                              onClick={(e) => e.stopPropagation()}
+                              className="my-2 bg-slate-900/80 rounded-xl p-1.5 border border-indigo-500/40 flex items-center justify-between"
+                            >
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  adjustCartItemQuantity(product.id, -1);
+                                }}
+                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-extrabold text-xs flex items-center justify-center transition-all select-none"
+                              >
+                                -
+                              </button>
+                              <div className="font-mono font-bold text-white text-[11px] flex-1 text-center">
+                                {cartItem.quantity} <span className="text-[8px] text-slate-500 uppercase">{product.unit}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  adjustCartItemQuantity(product.id, 1);
+                                }}
+                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-extrabold text-xs flex items-center justify-center transition-all select-none"
+                              >
+                                +
+                              </button>
+                            </div>
+                          )}
 
                           <div className="mt-2 text-center md:text-left">
                             <h4 className="text-sm font-black text-slate-100 line-clamp-1 group-hover:text-indigo-300 transition-colors">
@@ -789,8 +902,13 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
                   {/* Informational Card showing selected product description */}
                   {selectedProduct && (
                     <div className="mt-5 p-4 bg-slate-950 border border-slate-800 rounded-2xl flex items-start gap-3 animate-fade-in">
-                      <div className="p-2.5 rounded-lg bg-indigo-500/10 text-indigo-400 shrink-0 mt-0.5 border border-indigo-500/20">
-                        {renderProductIcon(selectedProduct.iconName, "w-5 h-5")}
+                      <div className="w-12 h-12 rounded-xl bg-slate-900 overflow-hidden shrink-0 border border-slate-800">
+                        <img
+                          src={selectedProduct.imageUrl}
+                          alt={selectedProduct.name}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
                       </div>
                       <div className="flex-1">
                         <h5 className="text-sm font-bold text-white flex items-center gap-2">
@@ -823,116 +941,111 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
                   </div>
                   <div>
                     <h3 className="font-extrabold text-white text-sm tracking-wide uppercase">Langkah 3: Unggah Desain & Catatan Detil</h3>
-                    <p className="text-xs text-slate-400">Mendukung multi-file upload & anotasi instruksi cetak per item.</p>
+                    <p className="text-xs text-slate-400">Mendukung multi-file upload & anotasi instruksi cetak per item kustom.</p>
                   </div>
                 </div>
 
                 <div className="p-6 space-y-6">
-                  
-                  {/* Real File Input Drag and Drop simulated card */}
-                  <div className="border-2 border-dashed border-slate-800 hover:border-indigo-500/50 bg-slate-950 rounded-2xl p-6 text-center relative transition-all group">
-                    <input
-                      type="file"
-                      id="file-uploader"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    />
-                    
-                    <div className="flex flex-col items-center justify-center space-y-3 z-0 relative">
-                      <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                        {uploadLoading ? (
-                          <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Upload className="w-6 h-6" />
-                        )}
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm font-bold text-slate-200">
-                          Ketuk untuk pilih dari Galeri HP / Komputer
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                          Mendukung file Gambar (PNG, JPG, JPEG) hingga 3 desain berbeda sekaligus secara berkelompok.
-                        </p>
-                      </div>
+                  {cart.length > 0 ? (
+                    <div className="space-y-6">
+                      {cart.map((cartItem, itemIdx) => (
+                        <div key={cartItem.product.id} className="bg-slate-950 p-5 rounded-2xl border border-slate-850 space-y-4">
+                          
+                          {/* Cart item title bar */}
+                          <div className="flex items-center gap-3 border-b border-slate-900 pb-3">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-800 shrink-0 bg-slate-900">
+                              <img src={cartItem.product.imageUrl} alt={cartItem.product.name} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-[9px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20 font-mono font-bold uppercase tracking-wide">Produk #{itemIdx + 1}</span>
+                              <h4 className="text-xs font-black text-white uppercase tracking-wider mt-0.5">{cartItem.product.name}</h4>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs font-bold text-indigo-400 font-mono">{cartItem.quantity} <span className="text-[10px] text-slate-500">{cartItem.product.unit}</span></p>
+                              <span className="text-[9px] text-slate-500 font-mono">Batas Min: {cartItem.product.minOrder}</span>
+                            </div>
+                          </div>
 
-                      <span className="px-3 py-1 bg-slate-900 text-indigo-400 text-[10px] font-mono tracking-widest uppercase rounded border border-slate-800">
-                        Pilih Multi-File Gambar Desain
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* PREVIEW CONTAINER FOR EACH UPLOADED IMAGE WITH INDIVIDUAL TEXTAREA ANNOTATION */}
-                  {designs.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-slate-400 font-mono uppercase tracking-wider">
-                          Daftar Antrean Desain ({designs.length})
-                        </h4>
-                        <button
-                          type="button"
-                          onClick={() => setDesigns([])}
-                          className="text-[10px] text-rose-400 hover:text-rose-300 font-mono px-2 py-1 bg-rose-500/10 rounded"
-                        >
-                          Hapus Semua
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {designs.map((design, dIdx) => (
-                          <div key={design.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 flex flex-col space-y-3 relative">
+                          {/* Upload element for this specific cart product */}
+                          <div className="border-2 border-dashed border-slate-900 hover:border-indigo-500/40 bg-slate-900/40 rounded-xl p-5 text-center relative transition-all group">
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              onChange={(e) => handleImageChangeForCartItem(cartItem.product.id, e)}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
                             
-                            <div className="flex gap-3">
-                              {/* Thumbnail preview */}
-                              <div className="w-16 h-16 rounded-lg bg-slate-900 overflow-hidden shrink-0 border border-slate-800">
-                                <img
-                                  src={design.previewUrl}
-                                  alt={design.fileName}
-                                  className="w-full h-full object-cover"
-                                  referrerPolicy="no-referrer"
-                                />
+                            <div className="flex flex-col items-center justify-center space-y-2 z-0 relative">
+                              <div className="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                                {uploadLoading ? (
+                                  <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Upload className="w-5 h-5" />
+                                )}
                               </div>
                               
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-slate-300 truncate font-mono">
-                                  {design.fileName}
+                              <div>
+                                <p className="text-xs font-bold text-slate-300">
+                                  Pilih Gambar Desain Cetak {cartItem.product.name}
                                 </p>
-                                <p className="text-[10px] text-slate-500">
-                                  Slot Desain #{dIdx + 1}
+                                <p className="text-[10px] text-slate-500 mt-0.5">
+                                  Format png, jpg, jpeg. Bisa upload banyak desain.
                                 </p>
-                                <button
-                                  type="button"
-                                  onClick={() => removeDesign(design.id)}
-                                  className="text-[10px] text-rose-500 hover:text-rose-400 font-mono mt-1 flex items-center gap-1"
-                                >
-                                  <Trash2 className="w-3 h-3" /> Hapus File
-                                </button>
                               </div>
                             </div>
-
-                            {/* TEXTAREA ANNOTATION AS STRONGLY MANDATED BY STEP 3 SPECIFICATION */}
-                            <div>
-                              <label className="block text-[10px] font-bold text-indigo-400 uppercase font-mono tracking-wider mb-1">
-                                Instruksi Khusus Desain Ini:
-                              </label>
-                              <textarea
-                                value={design.notes}
-                                onChange={(e) => updateDesignNote(design.id, e.target.value)}
-                                placeholder="misal: Logo ini ditaruh di tengah mug, tulisan melengkung di atas."
-                                rows={2}
-                                className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 hover:border-slate-700 text-slate-200 text-xs rounded-lg p-2 outline-none resize-none font-sans"
-                              />
-                            </div>
-
                           </div>
-                        ))}
-                      </div>
+
+                          {/* Previews for this cart item */}
+                          {cartItem.designs.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                              {cartItem.designs.map((design, dIdx) => (
+                                <div key={design.id} className="bg-slate-900 p-3 rounded-xl border border-slate-800/80 flex flex-col space-y-2">
+                                  <div className="flex gap-3">
+                                    <div className="w-12 h-12 rounded bg-slate-950 overflow-hidden shrink-0 border border-slate-800">
+                                      <img src={design.previewUrl} alt={design.fileName} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-[10px] font-bold text-slate-300 truncate font-mono">{design.fileName}</p>
+                                      <p className="text-[9px] text-slate-500">Slot Gambar #{dIdx + 1}</p>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeDesignFromCartItem(cartItem.product.id, design.id)}
+                                        className="text-[9px] text-rose-500 hover:text-rose-400 font-mono mt-0.5 flex items-center gap-1 cursor-pointer"
+                                      >
+                                        <Trash2 className="w-2.5 h-2.5" /> Hapus File
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-[8px] font-bold text-indigo-400 uppercase font-mono tracking-wider mb-1">Catatan instruksi khusus cetak:</label>
+                                    <textarea
+                                      value={design.notes}
+                                      onChange={(e) => updateDesignNoteForCartItem(cartItem.product.id, design.id, e.target.value)}
+                                      placeholder="misal: Taruh logo di sisi depan-belakang gelas."
+                                      rows={2}
+                                      className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 text-slate-200 text-[11px] rounded p-1.5 outline-none resize-none font-sans"
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="p-3 bg-amber-500/5 text-amber-400 border border-amber-500/10 rounded-xl text-[10px] text-center font-mono">
+                              ⚠️ Belum ada file desain kustom terunggah untuk produk ini.
+                            </div>
+                          )}
+
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <div className="p-4 bg-indigo-950/20 rounded-xl border border-indigo-800/20 text-center text-xs text-slate-400">
-                      Belum ada gambar terpilih. Silakan ketuk tombol unggah di atas untuk melampirkan mockup kasar atau ornamen desain kamu.
+                    <div className="p-8 bg-slate-950/50 rounded-2xl border border-slate-850 text-center text-xs text-slate-500 space-y-2">
+                      <ShoppingBag className="w-10 h-10 text-slate-700 mx-auto animate-bounce" />
+                      <div>
+                        <p className="text-sm font-bold text-slate-300">Harap Pilih Produk Terlebih Dahulu</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Silakan ketuk produk sublimasi pada Langkah 2 untuk menambahkannya ke keranjang checkout.</p>
+                      </div>
                     </div>
                   )}
 
@@ -946,7 +1059,7 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
                       onChange={(e) => setGeneralNotes(e.target.value)}
                       placeholder="Tuliskan jika ada permintaan ukuran khusus, paket pelindung ekspedisi atau catatan finishing."
                       rows={3}
-                      className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white rounded-xl p-3 text-xs outline-none transition-all"
+                      className="w-full bg-slate-950 border border-slate-850 hover:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white rounded-xl p-3 text-xs outline-none transition-all"
                     />
                   </div>
 
@@ -1027,78 +1140,72 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
                   🛒 DETAIL PEMESANAN KAMU
                 </h3>
 
-                {selectedProduct ? (
+                {cart.length > 0 ? (
                   <div className="mt-4 space-y-4">
-                    {/* Selected product layout inline info */}
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-400">Produk Sublimasi:</span>
-                      <span className="text-white font-bold">{selectedProduct.name}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-400">Harga Satuan:</span>
-                      <span className="text-slate-200 font-mono font-semibold">Rp {selectedProduct.price.toLocaleString('id-ID')}</span>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-850">
-                      <label className="block text-xs font-bold text-slate-400 font-mono uppercase mb-2">
-                        🔢 JUMLAH / KUANTITAS ({selectedProduct.unit})
-                      </label>
-                      
-                      <div className="flex items-center justify-between gap-4 mt-1 bg-slate-950 p-2 rounded-xl border border-slate-850">
-                        {/* Selector custom controller buttons */}
-                        <button
-                          type="button"
-                          onClick={() => adjustQuantity(-1)}
-                          className="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300 font-extrabold text-lg hover:bg-slate-800 hover:text-white transition-all select-none"
-                        >
-                          -
-                        </button>
+                    {/* List Cart Items */}
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      <span className="text-[10px] text-slate-500 font-mono tracking-widest uppercase block mb-1">PRODUK DI KERANJANG</span>
+                      {cart.map((item, idx) => {
+                        const itemSub = item.product.price * item.quantity;
+                        const discRate = getDiscountForQty(item.quantity);
                         
-                        <div className="text-center flex-1">
-                          <input
-                            type="number"
-                            value={quantity}
-                            onChange={(e) => {
-                              const val = parseInt(e.target.value) || 0;
-                              setQuantity(val);
-                            }}
-                            className="bg-transparent text-center text-white text-base font-mono font-bold w-full outline-none focus:ring-0"
-                            min={selectedProduct.minOrder}
-                          />
-                          <span className="text-[10px] text-slate-500 font-mono">Min. {selectedProduct.minOrder} {selectedProduct.unit}</span>
-                        </div>
+                        return (
+                          <div key={item.product.id || idx} className="bg-slate-950 p-3 rounded-xl border border-slate-850 flex items-start gap-2 justify-between">
+                            <div className="flex gap-2">
+                              <div className="w-8 h-8 rounded overflow-hidden shrink-0 border border-slate-800 bg-slate-900 mt-0.5">
+                                <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                              </div>
+                              <div>
+                                <h4 className="text-xs font-bold text-white leading-tight">{item.product.name}</h4>
+                                <p className="text-[10px] text-slate-400 font-mono font-bold uppercase mt-0.5">
+                                  {item.quantity} {item.product.unit} (Rp {item.product.price.toLocaleString('id-ID')})
+                                </p>
+                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                  <span className="text-[9px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/15 font-mono px-1 rounded">
+                                    {item.designs.length} Desain
+                                  </span>
+                                  {discRate > 0 && (
+                                    <span className="text-[9px] bg-rose-500/10 text-rose-400 border border-rose-500/15 font-mono font-bold px-1 rounded">
+                                      Diskon Grosir {Math.round(discRate * 100)}%
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
 
-                        <button
-                          type="button"
-                          onClick={() => adjustQuantity(1)}
-                          className="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300 font-extrabold text-lg hover:bg-slate-800 hover:text-white transition-all select-none"
-                        >
-                          +
-                        </button>
-                      </div>
+                            <div className="text-right">
+                              <p className="text-xs font-mono font-bold text-slate-200">Rp {itemSub.toLocaleString('id-ID')}</p>
+                              <button
+                                type="button"
+                                onClick={() => adjustCartItemQuantity(item.product.id, -999999)}
+                                className="text-[10px] text-rose-500 hover:text-rose-400 font-mono mt-2 cursor-pointer"
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
 
-                    {/* Live wholesale bonus text identifier block */}
-                    {quantity >= 20 ? (
-                      <div className="p-3 bg-rose-500/10 text-rose-300 border border-rose-500/20 rounded-xl text-xs flex items-start gap-2">
-                        <Sparkles className="w-4 h-4 shrink-0 text-amber-400 animate-pulse mt-0.5" />
-                        <div>
-                          <p className="font-bold">Grosir Reward Aktif!</p>
-                          <p className="text-[10px] text-slate-400">Mendapatkan potongan otomatis <span className="text-rose-300 font-bold">{Math.round(discountMultiplier * 100)}%</span> untuk pemesanan {quantity} pcs.</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-850 text-[11px] text-slate-400 font-medium">
-                        💡 <span className="text-slate-300 font-bold">Info Reseller:</span> Tambah kuantitas hingga <span className="text-indigo-400 font-mono font-bold">20</span> pcs untuk membuka diskon harga grosir otomatis!
-                      </div>
-                    )}
+                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-850 text-xs text-slate-400">
+                      <span>Total Item Unik:</span>
+                      <span className="font-mono font-bold text-slate-200">
+                        {cart.length} Jenis Produk
+                      </span>
+                    </div>
 
-                    {/* File count indicator */}
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-400">File Desain Terunggah:</span>
+                    <div className="flex justify-between items-center text-xs text-slate-400">
+                      <span>Total Jumlah Kuantitas:</span>
+                      <span className="font-mono font-bold text-slate-200">
+                        {cart.reduce((sum, item) => sum + item.quantity, 0)} pcs
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-xs pb-3">
+                      <span className="text-slate-400">Total File Desain Terunggah:</span>
                       <span className="font-mono font-bold bg-indigo-500/10 text-indigo-400 px-2.5 py-0.5 rounded border border-indigo-500/25">
-                        {designs.length} Desain
+                        {cart.reduce((sum, item) => sum + item.designs.length, 0)} Desain
                       </span>
                     </div>
 
