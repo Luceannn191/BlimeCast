@@ -470,56 +470,56 @@ ${instructionsText}`;
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white pb-16">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white pb-16 w-full max-w-full overflow-x-hidden relative">
       
       {/* GLOW DECORATIONS IN TOP-UP PORTAL STYLE */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-rose-600/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* HEADER / NAVIGATION BAR */}
-      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 w-full overflow-hidden">
+        <div className="max-w-6xl mx-auto px-2.5 xs:px-4 py-3 md:py-4 flex items-center justify-between gap-1.5 xs:gap-3">
           
           {/* Logo Brand */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setCurrentTab('checkout'); setRecentOrderSuccess(null); }}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-rose-500 p-[2px] shadow-lg shadow-indigo-500/20">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-rose-400 text-xl tracking-wider">
+          <div className="flex items-center gap-1.5 xs:gap-2.5 cursor-pointer shrink-0" onClick={() => { setCurrentTab('checkout'); setRecentOrderSuccess(null); }}>
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-rose-500 p-[2px] shadow-lg shadow-indigo-500/20 shrink-0">
+              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-rose-400 text-sm md:text-xl tracking-wider select-none">
                 B
               </div>
             </div>
-            <div>
-              <h1 id="logo-title" className="text-xl font-black tracking-tight bg-gradient-to-r from-indigo-300 via-purple-300 to-rose-300 bg-clip-text text-transparent">
+            <div className="min-w-0">
+              <h1 id="logo-title" className="text-sm xs:text-base md:text-xl font-black tracking-tight bg-gradient-to-r from-indigo-300 via-purple-300 to-rose-300 bg-clip-text text-transparent truncate line-clamp-1">
                 BLIMCAST
               </h1>
-              <p className="text-[10px] text-indigo-400/80 font-mono tracking-widest uppercase">Sublimasi Instant</p>
+              <p className="text-[7px] xs:text-[9px] md:text-[10px] text-indigo-400/80 font-mono tracking-widest uppercase truncate">Sublimasi Instant</p>
             </div>
           </div>
 
           {/* Navigasi Utama */}
-          <nav className="flex items-center gap-1 md:gap-2">
+          <nav className="flex items-center gap-1 xs:gap-1.5 md:gap-2 shrink-0">
             <button
               id="nav-checkout"
               onClick={() => { setCurrentTab('checkout'); setRecentOrderSuccess(null); }}
-              className={`px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+              className={`px-2.5 py-1.5 xs:px-3 xs:py-2 md:px-4 md:py-2 text-[10px] xs:text-xs md:text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-1 md:gap-1.5 shrink-0 ${
                 currentTab === 'checkout'
                   ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/20'
                   : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
               }`}
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span>Pesan</span>
             </button>
 
             <button
               id="nav-cek-pesanan"
               onClick={() => { setCurrentTab('cek-pesanan'); setRecentOrderSuccess(null); }}
-              className={`px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+              className={`px-2.5 py-1.5 xs:px-3 xs:py-2 md:px-4 md:py-2 text-[10px] xs:text-xs md:text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-1 md:gap-1.5 shrink-0 ${
                 currentTab === 'cek-pesanan'
                   ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/20'
                   : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
               }`}
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span>Cek Pesanan</span>
             </button>
 
@@ -527,14 +527,14 @@ ${instructionsText}`;
               <button
                 id="nav-admin"
                 onClick={() => { setCurrentTab('admin'); setRecentOrderSuccess(null); }}
-                className={`px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                className={`px-2 py-1.5 xs:px-3 xs:py-2 md:px-4 md:py-2 text-[10px] xs:text-xs md:text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-1 md:gap-1.5 shrink-0 ${
                   currentTab === 'admin'
                     ? 'bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md shadow-rose-600/20'
                     : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
                 }`}
               >
-                <Lock className="w-4 h-4" />
-                <span>Admin Panel</span>
+                <Lock className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span>Admin</span>
               </button>
             )}
           </nav>
@@ -598,7 +598,7 @@ ${instructionsText}`;
       )}
 
       {/* CORE WRAPPER */}
-      <main className="max-w-6xl mx-auto px-4 mt-8">
+      <main className="max-w-6xl mx-auto px-2 xs:px-4 mt-4 md:mt-8 w-full">
 
         {/* ========================================================= */}
         {/* VIEW 1: RECENT ORDER SUCCESS (SINGLE PAGE SUCCESS WINDOW) */}
@@ -810,17 +810,17 @@ ${instructionsText}`;
               <div className="bg-slate-900 rounded-3xl border border-slate-800/80 overflow-hidden relative shadow-xl">
                 
                 {/* Visual Step Banner Indicator */}
-                <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-6 py-4 border-b border-slate-800/60 flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 border-2 border-indigo-500/70 text-indigo-300 font-mono font-bold text-sm flex items-center justify-center shadow-inner">
+                <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-800/60 flex items-center gap-2.5 sm:gap-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 border-2 border-indigo-500/70 text-indigo-300 font-mono font-bold text-sm flex items-center justify-center shadow-inner shrink-0">
                     1
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-white text-sm tracking-wide uppercase">Langkah 1: Hubungi Via WhatsApp</h3>
-                    <p className="text-xs text-slate-400">Gunakan nomor WhatsApp aktif Anda sebagai ID pelacakan pesanan tanpa akun.</p>
+                    <h3 className="font-extrabold text-white text-xs sm:text-sm tracking-wide uppercase">Langkah 1: Hubungi Via WhatsApp</h3>
+                    <p className="text-[10px] sm:text-xs text-slate-400">Gunakan nomor WhatsApp aktif Anda sebagai ID pelacakan pesanan tanpa akun.</p>
                   </div>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-4 sm:p-6 space-y-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-2 font-mono uppercase tracking-wider">
                       Nomor WhatsApp Anda <span className="text-rose-500 text-sm">*</span>
@@ -853,19 +853,19 @@ ${instructionsText}`;
               <div id="step-products" className="bg-slate-900 rounded-3xl border border-slate-800/80 overflow-hidden relative shadow-xl">
                 
                 {/* Visual Step Banner Indicator */}
-                <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-6 py-4 border-b border-slate-800/60 flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 border-2 border-indigo-500/70 text-indigo-300 font-mono font-bold text-sm flex items-center justify-center shadow-inner">
+                <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-800/60 flex items-center gap-2.5 sm:gap-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 border-2 border-indigo-500/70 text-indigo-300 font-mono font-bold text-sm flex items-center justify-center shadow-inner shrink-0">
                     2
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-extrabold text-white text-sm tracking-wide uppercase">Langkah 2: Pilih Produk Sublimasi</h3>
-                    <p className="text-xs text-slate-400">Tentukan jenis merchandise kustom yang akan diproduksi.</p>
+                    <h3 className="font-extrabold text-white text-xs sm:text-sm tracking-wide uppercase">Langkah 2: Pilih Produk Sublimasi</h3>
+                    <p className="text-[10px] sm:text-xs text-slate-400">Tentukan jenis merchandise kustom yang akan diproduksi.</p>
                   </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-3 xs:p-4 sm:p-6">
                   {/* Grid 10 Products Ala Portal Top-up */}
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4">
                     {SUBLIMATION_PRODUCTS.map((product, idx) => {
                       const cartItem = cart.find(item => item.product.id === product.id);
                       const isSelected = !!cartItem;
@@ -875,7 +875,7 @@ ${instructionsText}`;
                           id={`product-${product.id}`}
                           key={product.id}
                           onClick={() => handleProductSelect(product)}
-                          className={`group cursor-pointer rounded-2xl p-4 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
+                          className={`group cursor-pointer rounded-2xl p-2.5 xs:p-3.5 sm:p-4 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
                             isSelected
                               ? 'bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900/40 border-indigo-500 shadow-lg shadow-indigo-500/10'
                               : 'bg-slate-950/80 border-slate-850 hover:border-slate-700 hover:bg-slate-900/60'
@@ -889,7 +889,7 @@ ${instructionsText}`;
                           )}
 
                           {/* Beautiful full-width product mockup image scaling on hover */}
-                          <div className="w-full h-32 overflow-hidden rounded-xl bg-slate-950 mb-3 border border-slate-900 relative group-hover:border-indigo-500/40 transition-all">
+                          <div className="w-full h-24 xs:h-28 sm:h-32 overflow-hidden rounded-xl bg-slate-950 mb-3 border border-slate-900 relative group-hover:border-indigo-500/40 transition-all">
                             <img
                               src={product.imageUrl}
                               alt={product.name}
@@ -914,11 +914,11 @@ ${instructionsText}`;
                                   e.stopPropagation();
                                   adjustCartItemQuantity(product.id, -1);
                                 }}
-                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-extrabold text-xs flex items-center justify-center transition-all select-none"
+                                className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-extrabold text-xs flex items-center justify-center transition-all select-none"
                               >
                                 -
                               </button>
-                              <div className="font-mono font-bold text-white text-[11px] flex-1 text-center">
+                              <div className="font-mono font-bold text-white text-[10px] sm:text-[11px] flex-1 text-center">
                                 {cartItem.quantity} <span className="text-[8px] text-slate-500 uppercase">{product.unit}</span>
                               </div>
                               <button
@@ -927,28 +927,38 @@ ${instructionsText}`;
                                   e.stopPropagation();
                                   adjustCartItemQuantity(product.id, 1);
                                 }}
-                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-extrabold text-xs flex items-center justify-center transition-all select-none"
+                                className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-extrabold text-xs flex items-center justify-center transition-all select-none"
                               >
                                 +
                               </button>
                             </div>
                           )}
 
-                          <div className="mt-2 text-center md:text-left">
-                            <h4 className="text-sm font-black text-slate-100 line-clamp-1 group-hover:text-indigo-300 transition-colors">
-                              {product.name}
-                            </h4>
-                            <p className="text-[11px] text-slate-400 font-medium font-mono mt-1">
-                              Mulai Rp {product.price.toLocaleString('id-ID')} <span className="text-[9px] text-slate-500">/{product.unit}</span>
-                            </p>
+                          <div className="mt-2 text-center md:text-left flex-1 flex flex-col justify-between">
+                            <div>
+                              <h4 className="text-xs sm:text-sm font-black text-slate-100 line-clamp-1 group-hover:text-indigo-300 transition-colors">
+                                {product.name}
+                              </h4>
+                              <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium font-mono mt-1">
+                                Mulai Rp {product.price.toLocaleString('id-ID')} <span className="text-[9px] text-slate-500">/{product.unit}</span>
+                              </p>
+                            </div>
                           </div>
 
-                          {/* Info Badge */}
-                          <div className="mt-3 flex items-center justify-between text-[9px]">
-                            <span className={`px-1.5 py-0.5 rounded font-mono ${product.badgeColor}`}>
-                              ⏱️ {product.estimatedTime}
-                            </span>
-                            <span className="text-slate-500">Min: {product.minOrder} {product.unit}</span>
+                          {/* Info Badge - Re-architected for ultra-clean mobile-first stacking */}
+                          <div className="mt-3 pt-2.5 border-t border-slate-900/80 flex flex-col gap-1.5 text-[10px]">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[10px] text-slate-500 font-semibold font-sans">Proses:</span>
+                              <span className={`px-1.5 py-0.5 rounded font-mono font-bold text-[9px] whitespace-nowrap tracking-wide leading-none shrink-0 ${product.badgeColor}`}>
+                                ⏱️ {product.estimatedTime}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[10px] text-slate-500 font-semibold font-sans">Min. Order:</span>
+                              <span className="text-slate-300 font-mono font-bold text-[9px] whitespace-nowrap shrink-0">
+                                {product.minOrder} {product.unit}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       );
@@ -991,17 +1001,17 @@ ${instructionsText}`;
               <div ref={step2Ref} className="bg-slate-900 rounded-3xl border border-slate-800/80 overflow-hidden relative shadow-xl">
                 
                 {/* Visual Step Banner Indicator */}
-                <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-6 py-4 border-b border-slate-800/60 flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 border-2 border-indigo-500/70 text-indigo-300 font-mono font-bold text-sm flex items-center justify-center shadow-inner">
+                <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-800/60 flex items-center gap-2.5 sm:gap-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 border-2 border-indigo-500/70 text-indigo-300 font-mono font-bold text-sm flex items-center justify-center shadow-inner shrink-0">
                     3
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-white text-sm tracking-wide uppercase">Langkah 3: Unggah Desain & Catatan Detil</h3>
-                    <p className="text-xs text-slate-400">Mendukung multi-file upload & anotasi instruksi cetak per item kustom.</p>
+                    <h3 className="font-extrabold text-white text-xs sm:text-sm tracking-wide uppercase">Langkah 3: Unggah Desain & Catatan Detil</h3>
+                    <p className="text-[10px] sm:text-xs text-slate-400">Mendukung multi-file upload & anotasi instruksi cetak per item kustom.</p>
                   </div>
                 </div>
 
-                <div className="p-6 space-y-6">
+                <div className="p-4 sm:p-6 space-y-6">
                   
                   {/* DESIGN OPTIONS MODE SELECT ROTATOR */}
                   <div className="grid grid-cols-2 gap-2.5 p-1 bg-slate-950 rounded-2xl border border-slate-850/80">
@@ -1212,17 +1222,17 @@ ${instructionsText}`;
               <div ref={step3Ref} className="bg-slate-900 rounded-3xl border border-slate-800/80 overflow-hidden relative shadow-xl">
                 
                 {/* Visual Step Banner Indicator */}
-                <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-6 py-4 border-b border-slate-800/60 flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 border-2 border-indigo-500/70 text-indigo-300 font-mono font-bold text-sm flex items-center justify-center shadow-inner">
+                <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-800/60 flex items-center gap-2.5 sm:gap-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 border-2 border-indigo-500/70 text-indigo-300 font-mono font-bold text-sm flex items-center justify-center shadow-inner shrink-0">
                     4
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-white text-sm tracking-wide uppercase">Langkah 4: Pilih Metode Pembayaran</h3>
-                    <p className="text-xs text-slate-400">Selesaikan transaksi menggunakan metode pembayaran langsung terpilih.</p>
+                    <h3 className="font-extrabold text-white text-xs sm:text-sm tracking-wide uppercase">Langkah 4: Pilih Metode Pembayaran</h3>
+                    <p className="text-[10px] sm:text-xs text-slate-400">Selesaikan transaksi menggunakan metode pembayaran langsung terpilih.</p>
                   </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {PAYMENT_METHODS.map((method) => {
                       const isSelected = selectedPayment === method.id;
@@ -1269,7 +1279,7 @@ ${instructionsText}`;
             {/* RIGHT COLUMN: SINGLE-PAGE ESTIMATION & ACTIONS CHECKOUT PANEL */}
             <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
               
-              <div className="bg-slate-900 rounded-3xl border border-slate-800/80 p-6 shadow-2xl relative overflow-hidden">
+              <div className="bg-slate-900 rounded-3xl border border-slate-800/80 p-4 sm:p-6 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
                 
                 <h3 className="text-sm font-extrabold tracking-wider text-indigo-400 font-mono uppercase border-b border-indigo-950 pb-3">
