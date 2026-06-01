@@ -50,6 +50,8 @@ export default function App() {
   const [designs, setDesigns] = useState<DesignUpload[]>([]);
   const [generalNotes, setGeneralNotes] = useState<string>('');
   const [selectedPayment, setSelectedPayment] = useState<string>('qris');
+  const [designServiceType, setDesignServiceType] = useState<'self' | 'help'>('self');
+  const [showPromoModal, setShowPromoModal] = useState<boolean>(false);
   
   // App views
   const [currentTab, setCurrentTab] = useState<'checkout' | 'cek-pesanan' | 'admin'>('checkout');
@@ -313,11 +315,13 @@ export default function App() {
       return;
     }
 
-    // Ensure all items in the cart have at least 1 design uploaded
-    const missingDesign = cart.find(item => item.designs.length === 0);
-    if (missingDesign) {
-      alert(`Harap unggah minimal 1 file gambar desain untuk produk: ${missingDesign.product.name}`);
-      return;
+    // Ensure all items in the cart have at least 1 design uploaded (Only if self-design selected)
+    if (designServiceType === 'self') {
+      const missingDesign = cart.find(item => item.designs.length === 0);
+      if (missingDesign) {
+        alert(`Harap unggah minimal 1 file gambar desain untuk produk: ${missingDesign.product.name}`);
+        return;
+      }
     }
 
     setOrderSubmitting(true);
@@ -432,16 +436,24 @@ export default function App() {
   // Helper to compose dynamic WA API message links
   const getWhatsAppMessageLink = (order: SublimationOrder) => {
     let itemsText = '';
+    const hasNoDesigns = order.items && order.items.length > 0 
+      ? order.items.every(item => !item.designs || item.designs.length === 0)
+      : !order.designs || order.designs.length === 0;
+
     if (order.items && order.items.length > 0) {
       itemsText = order.items.map((item, index) => 
-        `- *Item #${index + 1}:* ${item.product.name} (${item.quantity} ${item.product.unit}) / ${item.designs.length} Desain`
+        `- *Item #${index + 1}:* ${item.product.name} (${item.quantity} ${item.product.unit})${item.designs && item.designs.length > 0 ? ` / ${item.designs.length} Desain` : ' (Minta Didesainkan)'}`
       ).join('\n');
     } else {
       const prodName = order.product?.name || 'Produk';
       const prodUnit = order.product?.unit || 'unit';
       const designCount = order.designs?.length || 0;
-      itemsText = `- *Item:* ${prodName} (${order.quantity} ${prodUnit}) / ${designCount} Desain`;
+      itemsText = `- *Item:* ${prodName} (${order.quantity} ${prodUnit})${designCount > 0 ? ` / ${designCount} Desain` : ' (Minta Didesainkan)'}`;
     }
+
+    const instructionsText = hasNoDesigns
+      ? "Saya memilih opsi 'Kami Desainkan' (layanan desain profesional dari tim Blimcast). Mohon dibantu untuk rancangan layout/desain dan pembuatan mockup produk saya. Terimakasih!"
+      : "Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desain & instruksinya untuk segera dicetak. Terimakasih!";
 
     const text = `Halo Admin Blimcast, saya mau konfirmasi pesanan kustom sublimasi saya.
     
@@ -452,7 +464,7 @@ ${itemsText}
 💳 *METODE:* ${PAYMENT_METHODS.find(p => p.id === order.paymentMethod)?.name || order.paymentMethod}
 📦 *STATUS:* ${order.status}
 
-Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desain & instruksinya untuk segera dicetak. Terimakasih!`;
+${instructionsText}`;
 
     return `https://api.whatsapp.com/send?phone=6281234567890&text=${encodeURIComponent(text)}`;
   };
@@ -990,105 +1002,185 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
                 </div>
 
                 <div className="p-6 space-y-6">
-                  {cart.length > 0 ? (
-                    <div className="space-y-6">
-                      {cart.map((cartItem, itemIdx) => (
-                        <div key={cartItem.product.id} className="bg-slate-950 p-5 rounded-2xl border border-slate-850 space-y-4">
-                          
-                          {/* Cart item title bar */}
-                          <div className="flex items-center gap-3 border-b border-slate-900 pb-3">
-                            <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-800 shrink-0 bg-slate-900">
-                              <img src={cartItem.product.imageUrl} alt={cartItem.product.name} className="w-full h-full object-cover" />
-                            </div>
-                            <div className="flex-1">
-                              <span className="text-[9px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20 font-mono font-bold uppercase tracking-wide">Produk #{itemIdx + 1}</span>
-                              <h4 className="text-xs font-black text-white uppercase tracking-wider mt-0.5">{cartItem.product.name}</h4>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs font-bold text-indigo-400 font-mono">{cartItem.quantity} <span className="text-[10px] text-slate-500">{cartItem.product.unit}</span></p>
-                              <span className="text-[9px] text-slate-500 font-mono">Batas Min: {cartItem.product.minOrder}</span>
-                            </div>
-                          </div>
+                  
+                  {/* DESIGN OPTIONS MODE SELECT ROTATOR */}
+                  <div className="grid grid-cols-2 gap-2.5 p-1 bg-slate-950 rounded-2xl border border-slate-850/80">
+                    <button
+                      type="button"
+                      onClick={() => setDesignServiceType('self')}
+                      className={`py-3 px-4 rounded-xl text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-2 transition-all cursor-pointer ${
+                        designServiceType === 'self'
+                          ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/10'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                      }`}
+                    >
+                      <Upload className="w-4 h-4 shrink-0" />
+                      <div className="text-center md:text-left">
+                        <span className="block font-black tracking-wide uppercase text-[10px] md:text-xs">Desain Sendiri</span>
+                        <span className="text-[9px] font-normal block opacity-80">Unggah file siap cetak</span>
+                      </div>
+                    </button>
 
-                          {/* Upload element for this specific cart product */}
-                          <div className="border-2 border-dashed border-slate-900 hover:border-indigo-500/40 bg-slate-900/40 rounded-xl p-5 text-center relative transition-all group">
-                            <input
-                              type="file"
-                              multiple
-                              accept="image/*"
-                              onChange={(e) => handleImageChangeForCartItem(cartItem.product.id, e)}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                            />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDesignServiceType('help');
+                        setShowPromoModal(true);
+                      }}
+                      className={`py-3 px-4 rounded-xl text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-2 transition-all cursor-pointer ${
+                        designServiceType === 'help'
+                          ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-600/10'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                      }`}
+                    >
+                      <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <div className="text-center md:text-left">
+                        <span className="block font-black tracking-wide uppercase text-[10px] md:text-xs">Kami Desainkan</span>
+                        <span className="text-[9px] font-normal block opacity-80">Asistensi & konsep gratis (WA)</span>
+                      </div>
+                    </button>
+                  </div>
+
+                  {designServiceType === 'self' ? (
+                    cart.length > 0 ? (
+                      <div className="space-y-6">
+                        {cart.map((cartItem, itemIdx) => (
+                          <div key={cartItem.product.id} className="bg-slate-950 p-5 rounded-2xl border border-slate-850 space-y-4">
                             
-                            <div className="flex flex-col items-center justify-center space-y-2 z-0 relative">
-                              <div className="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                                {uploadLoading ? (
-                                  <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  <Upload className="w-5 h-5" />
-                                )}
+                            {/* Cart item title bar */}
+                            <div className="flex items-center gap-3 border-b border-slate-900 pb-3">
+                              <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-800 shrink-0 bg-slate-900">
+                                <img src={cartItem.product.imageUrl} alt={cartItem.product.name} className="w-full h-full object-cover" />
                               </div>
+                              <div className="flex-1">
+                                <span className="text-[9px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20 font-mono font-bold uppercase tracking-wide">Produk #{itemIdx + 1}</span>
+                                <h4 className="text-xs font-black text-white uppercase tracking-wider mt-0.5">{cartItem.product.name}</h4>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs font-bold text-indigo-400 font-mono">{cartItem.quantity} <span className="text-[10px] text-slate-500">{cartItem.product.unit}</span></p>
+                                <span className="text-[9px] text-slate-500 font-mono">Batas Min: {cartItem.product.minOrder}</span>
+                              </div>
+                            </div>
+
+                            {/* Upload element for this specific cart product */}
+                            <div className="border-2 border-dashed border-slate-900 hover:border-indigo-500/40 bg-slate-900/40 rounded-xl p-5 text-center relative transition-all group">
+                              <input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                onChange={(e) => handleImageChangeForCartItem(cartItem.product.id, e)}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                              />
                               
-                              <div>
-                                <p className="text-xs font-bold text-slate-300">
-                                  Pilih Gambar Desain Cetak {cartItem.product.name}
-                                </p>
-                                <p className="text-[10px] text-slate-500 mt-0.5">
-                                  Format png, jpg, jpeg. Bisa upload banyak desain.
-                                </p>
+                              <div className="flex flex-col items-center justify-center space-y-2 z-0 relative">
+                                <div className="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                                  {uploadLoading ? (
+                                    <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <Upload className="w-5 h-5" />
+                                  )}
+                                </div>
+                                
+                                <div>
+                                  <p className="text-xs font-bold text-slate-300">
+                                    Pilih Gambar Desain Cetak {cartItem.product.name}
+                                  </p>
+                                  <p className="text-[10px] text-slate-500 mt-0.5">
+                                    Format png, jpg, jpeg. Bisa upload banyak desain.
+                                  </p>
+                                </div>
                               </div>
                             </div>
+
+                            {/* Previews for this cart item */}
+                            {cartItem.designs.length > 0 ? (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                                {cartItem.designs.map((design, dIdx) => (
+                                  <div key={design.id} className="bg-slate-900 p-3 rounded-xl border border-slate-800/80 flex flex-col space-y-2">
+                                    <div className="flex gap-3">
+                                      <div className="w-12 h-12 rounded bg-slate-950 overflow-hidden shrink-0 border border-slate-800">
+                                        <img src={design.previewUrl} alt={design.fileName} className="w-full h-full object-cover" />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] font-bold text-slate-300 truncate font-mono">{design.fileName}</p>
+                                        <p className="text-[9px] text-slate-500">Slot Gambar #{dIdx + 1}</p>
+                                        <button
+                                          type="button"
+                                          onClick={() => removeDesignFromCartItem(cartItem.product.id, design.id)}
+                                          className="text-[9px] text-rose-500 hover:text-rose-400 font-mono mt-0.5 flex items-center gap-1 cursor-pointer"
+                                        >
+                                          <Trash2 className="w-2.5 h-2.5" /> Hapus File
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="block text-[8px] font-bold text-indigo-400 uppercase font-mono tracking-wider mb-1">Catatan instruksi khusus cetak:</label>
+                                      <textarea
+                                        value={design.notes}
+                                        onChange={(e) => updateDesignNoteForCartItem(cartItem.product.id, design.id, e.target.value)}
+                                        placeholder="misal: Taruh logo di sisi depan-belakang gelas."
+                                        rows={2}
+                                        className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 text-slate-200 text-[11px] rounded p-1.5 outline-none resize-none font-sans"
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="p-3 bg-amber-500/5 text-amber-400 border border-amber-500/10 rounded-xl text-[10px] text-center font-mono">
+                                ⚠️ Belum ada file desain kustom terunggah untuk produk ini.
+                              </div>
+                            )}
+
                           </div>
-
-                          {/* Previews for this cart item */}
-                          {cartItem.designs.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-                              {cartItem.designs.map((design, dIdx) => (
-                                <div key={design.id} className="bg-slate-900 p-3 rounded-xl border border-slate-800/80 flex flex-col space-y-2">
-                                  <div className="flex gap-3">
-                                    <div className="w-12 h-12 rounded bg-slate-950 overflow-hidden shrink-0 border border-slate-800">
-                                      <img src={design.previewUrl} alt={design.fileName} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-[10px] font-bold text-slate-300 truncate font-mono">{design.fileName}</p>
-                                      <p className="text-[9px] text-slate-500">Slot Gambar #{dIdx + 1}</p>
-                                      <button
-                                        type="button"
-                                        onClick={() => removeDesignFromCartItem(cartItem.product.id, design.id)}
-                                        className="text-[9px] text-rose-500 hover:text-rose-400 font-mono mt-0.5 flex items-center gap-1 cursor-pointer"
-                                      >
-                                        <Trash2 className="w-2.5 h-2.5" /> Hapus File
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <label className="block text-[8px] font-bold text-indigo-400 uppercase font-mono tracking-wider mb-1">Catatan instruksi khusus cetak:</label>
-                                    <textarea
-                                      value={design.notes}
-                                      onChange={(e) => updateDesignNoteForCartItem(cartItem.product.id, design.id, e.target.value)}
-                                      placeholder="misal: Taruh logo di sisi depan-belakang gelas."
-                                      rows={2}
-                                      className="w-full bg-slate-950 border border-slate-850 focus:border-indigo-500 text-slate-200 text-[11px] rounded p-1.5 outline-none resize-none font-sans"
-                                    />
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="p-3 bg-amber-500/5 text-amber-400 border border-amber-500/10 rounded-xl text-[10px] text-center font-mono">
-                              ⚠️ Belum ada file desain kustom terunggah untuk produk ini.
-                            </div>
-                          )}
-
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-8 bg-slate-950/50 rounded-2xl border border-slate-850 text-center text-xs text-slate-500 space-y-2">
+                        <ShoppingBag className="w-10 h-10 text-slate-700 mx-auto animate-bounce" />
+                        <div>
+                          <p className="text-sm font-bold text-slate-300">Harap Pilih Produk Terlebih Dahulu</p>
+                          <p className="text-[11px] text-slate-500 mt-0.5">Silakan ketuk produk sublimasi pada Langkah 2 untuk menambahkannya ke keranjang checkout.</p>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    )
                   ) : (
-                    <div className="p-8 bg-slate-950/50 rounded-2xl border border-slate-850 text-center text-xs text-slate-500 space-y-2">
-                      <ShoppingBag className="w-10 h-10 text-slate-700 mx-auto animate-bounce" />
-                      <div>
-                        <p className="text-sm font-bold text-slate-300">Harap Pilih Produk Terlebih Dahulu</p>
-                        <p className="text-[11px] text-slate-500 mt-0.5">Silakan ketuk produk sublimasi pada Langkah 2 untuk menambahkannya ke keranjang checkout.</p>
+                    /* HELPER ASSISTED TYPE PANEL */
+                    <div className="p-6 bg-slate-950 rounded-2xl border border-slate-850 text-center space-y-5 animate-fade-in">
+                      <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
+                        <Sparkles className="w-7 h-7" />
+                      </div>
+                      
+                      <div className="max-w-md mx-auto space-y-2">
+                        <h4 className="text-sm md:text-base font-black text-white uppercase tracking-wider">KAMI DESAINKAN SECARA GRATIS!</h4>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          Tidak usah pusing membuat layout cetak sendiri. Tim desainer profesional <span className="font-bold text-white">Blimcast</span> siap merancang sketsa, logo, dan konsep visual penempatan sublimasi kustom Anda tanpa tambahan biaya.
+                        </p>
+                        <div className="pt-1.5 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[10px] font-mono font-bold text-emerald-400">
+                          <span>✓ Tanpa Tambahan Biaya</span>
+                          <span>✓ Render Mockup 3D Realistis</span>
+                          <span>✓ Revisi Sampai Sempurna</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-sm mx-auto">
+                        <a
+                          href="https://api.whatsapp.com/send?phone=6281234567890&text=Halo%20Admin%20Blimcast%2C%20saya%20tertarik%20untuk%20mencetak%20sublimasi%20dan%20ingin%20berkonsultasi%20desain%20agar%20dibantu%20oleh%20tim%20desain%20Blimcast.%20Bisa%250dibantu%3F"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full sm:w-auto px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/10 active:scale-95 cursor-pointer text-center font-sans"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          <span>Konsultasi Desain WA</span>
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowPromoModal(true)}
+                          className="w-full sm:w-auto px-5 py-3 bg-slate-900 hover:bg-slate-850 hover:text-white text-slate-300 rounded-xl font-bold text-xs tracking-wider uppercase transition-all border border-slate-800 cursor-pointer"
+                        >
+                          Lihat Detail Proses
+                        </button>
                       </div>
                     </div>
                   )}
@@ -1631,6 +1723,96 @@ Saya sudah mengunggah desain lewat platform Blimcast, mohon bantu cek file desai
 
         </div>
       </footer>
+
+      {/* POPUP MODAL: KAMI DESAINKAN (FREE LAYOUT & DISCUSSION TOOL) */}
+      {showPromoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
+            
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-850 pb-4">
+              <div className="flex items-center gap-3 animate-pulse">
+                <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                  <Sparkles className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="text-sm md:text-base font-black text-white uppercase tracking-wider">Layanan Desain Blimcast</h3>
+                  <p className="text-[10px] text-emerald-400 font-mono uppercase tracking-widest font-bold">Free Design Assistant</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowPromoModal(false)}
+                className="p-1 rounded-lg bg-slate-950 border border-slate-850 text-slate-500 hover:text-slate-300 active:scale-95 transition-all cursor-pointer"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="space-y-4">
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Kami memahami bahwa tidak semua orang memiliki file siap cetak atau keahlian mendesain. Di <span className="font-bold text-white">Blimcast</span>, kami memberikan keleluasaan penuh melalui proses asistensi berikut:
+              </p>
+
+              <div className="grid grid-cols-1 gap-2.5">
+                <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-850/80 flex gap-3.5">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0 font-mono text-xs font-bold">1</span>
+                  <div className="text-xs">
+                    <p className="font-bold text-white mb-0.5">Diskusikan Konsep Anda</p>
+                    <p className="text-slate-400">Hubungi admin WhatsApp dan kirimkan referensi berupa corak, teks, logo kasar, atau sketsa yang ingin Anda buat.</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-850/80 flex gap-3.5">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0 font-mono text-xs font-bold">2</span>
+                  <div className="text-xs">
+                    <p className="font-bold text-white mb-0.5">Pembuatan Mockup Digital</p>
+                    <p className="text-slate-400">Tim kreatif kami akan merender visual mockup 3D dari gelas, kaos kaki, botol, atau tas bertema kustom Anda.</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-850/80 flex gap-3.5">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0 font-mono text-xs font-bold">3</span>
+                  <div className="text-xs">
+                    <p className="font-bold text-white mb-0.5">Revisi & Konfirmasi Cetak</p>
+                    <p className="text-slate-400">Revisi desain gratis jika ada tata letak yang kurang pas. Produksi sublimasi baru akan dimulai setelah Anda memberikan persetujuan akhir.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 flex items-center gap-2.5 text-[10px] text-emerald-400 font-mono">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span>Tanpa dipungut biaya sepeser pun untuk proses layout standar!</span>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-4 border-t border-slate-850 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPromoModal(false)}
+                className="px-4 py-2.5 bg-slate-950 border border-slate-850 hover:bg-slate-900 text-slate-400 hover:text-slate-200 rounded-xl text-xs font-bold cursor-pointer transition-all"
+              >
+                Kembali ke Form
+              </button>
+
+              <a
+                href="https://api.whatsapp.com/send?phone=6281234567890&text=Halo%20Admin%20Blimcast%2C%20saya%20tertarik%20untuk%20mencetak%20sublimasi%20dan%20ingin%20berkonsultasi%20desain%20agar%20dibantu%20oleh%20tim%20desain%20Blimcast.%20Bisa%20dibantu%3F"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowPromoModal(false)}
+                className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:brightness-110 text-white rounded-xl text-xs font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-lg shadow-emerald-600/10 cursor-pointer transition-all font-sans"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Mulai Chat WA</span>
+              </a>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

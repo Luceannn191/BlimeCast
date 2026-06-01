@@ -303,6 +303,19 @@ export default function AdminPanel({
                           const totalDesigns = order.items && order.items.length > 0
                             ? order.items.reduce((sum, item) => sum + item.designs.length, 0)
                             : order.designs?.length || 0;
+                          
+                          if (totalDesigns === 0) {
+                            return (
+                              <button
+                                onClick={() => setSelectedAdminOrder(order)}
+                                className="px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 rounded-md font-mono text-[10px] flex items-center justify-center gap-1 cursor-pointer w-full text-center font-bold"
+                              >
+                                <span>🎨 Desainkan Admin</span>
+                                <ChevronRight className="w-3 h-3 text-emerald-400" />
+                              </button>
+                            );
+                          }
+
                           return (
                             <button
                               onClick={() => setSelectedAdminOrder(order)}
@@ -418,7 +431,13 @@ export default function AdminPanel({
                           ))}
                         </div>
                       ) : (
-                        <div className="text-xs text-amber-400 italic pl-2">⚠️ Tidak ada file desain kustom diunggah untuk item ini.</div>
+                        <div className="p-4 bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs flex items-start gap-2.5 max-w-lg font-sans">
+                          <span className="text-sm">🎨</span>
+                          <div>
+                            <span className="font-bold block mb-0.5">Opsi Kami Desainkan Aktif</span>
+                            <span className="opacity-80">Pelanggan meminta bantuan desain kustom profesional dari tim Blimcast. Silakan berdiskusi via WhatsApp ({selectedAdminOrder.waNumber}) untuk bertukar konsep layout atau file logo.</span>
+                          </div>
+                        </div>
                       )}
                     </div>
                   ))}
@@ -457,7 +476,13 @@ export default function AdminPanel({
                       </div>
                     ))
                   ) : (
-                    <div className="p-4 text-slate-500 italic col-span-full">Tidak ada desain diunggah.</div>
+                    <div className="p-4 bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs flex items-start gap-2.5 max-w-lg font-sans col-span-full">
+                      <span className="text-sm">🎨</span>
+                      <div>
+                        <span className="font-bold block mb-0.5">Opsi Kami Desainkan Aktif</span>
+                        <span className="opacity-80">Pelanggan meminta bantuan desain kustom profesional dari tim Blimcast. Silakan berdiskusi via WhatsApp ({selectedAdminOrder.waNumber}) untuk bertukar konsep layout atau file logo.</span>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
