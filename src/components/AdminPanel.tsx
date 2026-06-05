@@ -91,7 +91,7 @@ export default function AdminPanel({
       
       {/* ADMIN ACCESS VERIFICATION BAR */}
       {!isAdminLogged ? (
-        <div className="max-w-md mx-auto bg-slate-900 rounded-3xl border border-slate-800 p-6 md:p-8 text-center shadow-2xl mt-12">
+        <div className="max-w-md mx-auto bg-[#0a4843] rounded-3xl border border-teal-500/20 p-6 md:p-8 text-center shadow-2xl mt-12">
           <span className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-4 border border-rose-500/20">
             <Lock className="w-6 h-6" />
           </span>
@@ -110,7 +110,7 @@ export default function AdminPanel({
                 value={adminPinInput}
                 onChange={(e) => setAdminPinInput(e.target.value)}
                 placeholder="Masukkan PIN (Gunakan: 1234)"
-                className="w-full bg-slate-950 border border-slate-850 hover:border-slate-800 focus:border-rose-500 text-white rounded-xl py-3.5 px-4 text-center font-mono tracking-widest placeholder-slate-700 outline-none transition-colors"
+                className="w-full bg-[#052b27] border border-teal-500/20 hover:border-teal-500/40 focus:border-rose-500 text-white rounded-xl py-3.5 px-4 text-center font-mono tracking-widest placeholder-slate-700 outline-none transition-colors"
                 maxLength={8}
                 required
               />
@@ -137,7 +137,7 @@ export default function AdminPanel({
       ) : (
         
         /* RENDER MAIN ADMIN WORKSTATION BOARD */
-        <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 md:p-8 shadow-2xl space-y-6 animate-fade-in">
+        <div className="bg-[#0a4843] rounded-3xl border border-teal-500/20 p-6 md:p-8 shadow-2xl space-y-6 animate-fade-in">
           
           {/* ADMIN WORKSTATION HEADER */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">

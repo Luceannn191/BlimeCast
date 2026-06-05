@@ -361,6 +361,17 @@ export default function App() {
          
          // Save current order success to show screen
          setRecentOrderSuccess(newOrder);
+
+         // Automatically send notification to admin by opening WhatsApp link
+         const waUrl = getWhatsAppMessageLink(newOrder);
+         setTimeout(() => {
+           try {
+             window.open(waUrl, '_blank');
+           } catch (err) {
+             window.location.href = waUrl;
+           }
+         }, 1500);
+
        } catch (error) {
          console.error('Terjadi eror saat menyimpan pesanan:', error);
        } finally {
@@ -470,20 +481,20 @@ ${instructionsText}`;
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white pb-16 w-full max-w-full overflow-x-hidden relative">
+    <div className="min-h-screen bg-[#0f766e] text-slate-100 font-sans selection:bg-teal-500 selection:text-white pb-16 w-full max-w-full overflow-x-hidden relative">
       
       {/* GLOW DECORATIONS IN TOP-UP PORTAL STYLE */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-rose-600/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* HEADER / NAVIGATION BAR */}
-      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 w-full overflow-hidden">
+      <header className="sticky top-0 z-40 bg-[#0a4843]/90 backdrop-blur-md border-b border-teal-500/20 w-full overflow-hidden">
         <div className="max-w-6xl mx-auto px-2.5 xs:px-4 py-3 md:py-4 flex items-center justify-between gap-1.5 xs:gap-3">
           
           {/* Logo Brand */}
           <div className="flex items-center gap-1.5 xs:gap-2.5 cursor-pointer shrink-0" onClick={() => { setCurrentTab('checkout'); setRecentOrderSuccess(null); }}>
             <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-rose-500 p-[2px] shadow-lg shadow-indigo-500/20 shrink-0">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-rose-400 text-sm md:text-xl tracking-wider select-none">
+              <div className="w-full h-full bg-[#052b27] rounded-[10px] flex items-center justify-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-rose-400 text-sm md:text-xl tracking-wider select-none">
                 B
               </div>
             </div>
@@ -544,45 +555,45 @@ ${instructionsText}`;
 
       {/* Hero Announcement & Fast Stats for Game Top-up site feeling */}
       {currentTab === 'checkout' && !recentOrderSuccess && (
-        <section className="bg-slate-900 border-b border-slate-800/60 py-8 relative overflow-hidden">
+        <section className="bg-[#0b4d48] border-b border-teal-500/20 py-8 relative overflow-hidden">
           <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6 relative">
             <div className="max-w-xl text-center md:text-left">
-              <span className="px-3 py-1 bg-gradient-to-r from-indigo-500/10 to-rose-500/10 text-indigo-300 text-[11px] font-mono font-bold tracking-wider uppercase rounded-full border border-indigo-500/25">
+              <span className="px-3 py-1 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 text-teal-300 text-[11px] font-mono font-bold tracking-wider uppercase rounded-full border border-teal-500/25">
                 ⚡ Pembuatan Kilat & Tanpa Login Muter-Muter
               </span>
               <h2 className="text-3xl md:text-4xl font-black text-white mt-4 tracking-tight leading-tight">
                 Cetak Produk Sublimasi <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-rose-300">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-200 via-emerald-200 to-amber-200">
                   Desain Kustom Sesamamu!
                 </span>
               </h2>
-              <p className="text-sm text-slate-400 mt-2 max-w-lg">
+              <p className="text-sm text-teal-100/85 mt-2 max-w-lg">
                 Pilih produk sublim terbaik, unggah gambar dari galeri HP, bayar otomatis via QRIS. Status pesanan dapat dipantau real-time cukup dengan nomor WhatsApp.
               </p>
               
               <div className="flex flex-wrap gap-4 mt-6 justify-center md:justify-start text-xs font-mono">
-                <div className="flex items-center gap-1.5 text-slate-300 bg-slate-950/80 px-2.5 py-1.5 rounded-md border border-slate-800">
+                <div className="flex items-center gap-1.5 text-teal-100 bg-[#052b27]/80 px-2.5 py-1.5 rounded-md border border-teal-750">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                   <span>Produksi Aktif</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-slate-300 bg-slate-950/80 px-2.5 py-1.5 rounded-md border border-slate-800">
+                <div className="flex items-center gap-1.5 text-teal-100 bg-[#052b27]/80 px-2.5 py-1.5 rounded-md border border-teal-750">
                   <span>⚡ Respon & Setup Kilat</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-slate-300 bg-slate-950/80 px-2.5 py-1.5 rounded-md border border-slate-800">
+                <div className="flex items-center gap-1.5 text-teal-100 bg-[#052b27]/80 px-2.5 py-1.5 rounded-md border border-teal-750">
                   <span>✨ Min. Order Rendah</span>
                 </div>
               </div>
             </div>
 
             {/* Simulated Fast Promo Card */}
-            <div className="w-full md:w-80 bg-gradient-to-b from-indigo-950/60 to-slate-950/80 p-5 rounded-2xl border border-indigo-500/25 relative flex flex-col justify-between shadow-2xl">
+            <div className="w-full md:w-80 bg-gradient-to-b from-[#0e5c56]/80 to-[#042421]/90 p-5 rounded-2xl border border-teal-500/30 relative flex flex-col justify-between shadow-2xl">
               <div className="absolute top-2 right-2 bg-rose-500 text-white font-mono font-bold text-[9px] px-2 py-0.5 rounded-full uppercase tracking-tighter">
                 Grosir Promo
               </div>
               <div>
-                <p className="text-xs text-indigo-400 font-mono tracking-widest uppercase">Diskon Spesial Hari Ini</p>
+                <p className="text-xs text-amber-300 font-mono tracking-widest uppercase">Diskon Spesial Hari Ini</p>
                 <h3 className="text-lg font-bold text-slate-100 mt-1">Sublimasi Hemat Meriah</h3>
-                <p className="text-xs text-slate-400 mt-2">Dapatkan potongan otomatis hingga <span className="text-indigo-300 font-bold">15% OFF</span> untuk pemesanan diatas 100 pcs untuk semua menu merchandise.</p>
+                <p className="text-xs text-teal-100/80 mt-2">Dapatkan potongan otomatis hingga <span className="text-amber-350 font-bold">15% OFF</span> untuk pemesanan diatas 100 pcs untuk semua menu merchandise.</p>
               </div>
               <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono">
                 <span className="text-slate-400">Grosir 20 pcs+:</span>
@@ -604,7 +615,7 @@ ${instructionsText}`;
         {/* VIEW 1: RECENT ORDER SUCCESS (SINGLE PAGE SUCCESS WINDOW) */}
         {/* ========================================================= */}
         {recentOrderSuccess && (
-          <div className="max-w-2xl mx-auto bg-slate-900 rounded-3xl border-2 border-emerald-500/40 p-6 md:p-8 relative overflow-hidden shadow-2xl animate-fade-in">
+          <div className="max-w-2xl mx-auto bg-[#0a4843] rounded-3xl border-2 border-emerald-500/40 p-6 md:p-8 relative overflow-hidden shadow-2xl animate-fade-in">
             {/* Success sparkles decor */}
             <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
             
@@ -613,9 +624,18 @@ ${instructionsText}`;
                 <Check className="w-8 h-8 stroke-[3]" />
               </div>
               <h2 className="text-2xl md:text-3xl font-black text-white">PESANAN BERHASIL DIBUAT!</h2>
-              <p className="text-sm text-slate-300 mt-2 max-w-md mx-auto">
+              <p className="text-sm text-teal-100 mt-2 max-w-md mx-auto">
                 Silakan lakukan pembayaran dan hubungi Admin lewat WhatsApp untuk segera diproses cetak.
               </p>
+
+              {/* Automatic notification notice banner */}
+              <div className="mt-4 p-3.5 bg-emerald-500/10 border border-emerald-500/35 text-emerald-300 rounded-2xl text-[11px] font-medium flex items-center justify-center gap-2 max-w-md mx-auto">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span>Dialihkan otomatis ke WhatsApp Admin untuk kirim notifikasi rincian pesanan...</span>
+              </div>
             </div>
 
             {/* Invoice card content */}
@@ -807,7 +827,7 @@ ${instructionsText}`;
             <div className="space-y-8 lg:col-span-8">
               
               {/* STEP 1: CUSTOMER WA IDENTIFICATION */}
-              <div className="bg-slate-900 rounded-3xl border border-slate-800/80 overflow-hidden relative shadow-xl">
+              <div className="bg-[#0a4843] rounded-3xl border border-teal-500/20 overflow-hidden relative shadow-xl">
                 
                 {/* Visual Step Banner Indicator */}
                 <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-800/60 flex items-center gap-2.5 sm:gap-4">
@@ -850,7 +870,7 @@ ${instructionsText}`;
               </div>
 
               {/* STEP 2: SELECT CUSTOM PRODUCTS */}
-              <div id="step-products" className="bg-slate-900 rounded-3xl border border-slate-800/80 overflow-hidden relative shadow-xl">
+              <div id="step-products" className="bg-[#0a4843] rounded-3xl border border-teal-500/20 overflow-hidden relative shadow-xl">
                 
                 {/* Visual Step Banner Indicator */}
                 <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-800/60 flex items-center gap-2.5 sm:gap-4">
@@ -998,7 +1018,7 @@ ${instructionsText}`;
               </div>
 
               {/* STEP 3: DATA DESIGN UPLOADS (REFS STACK) */}
-              <div ref={step2Ref} className="bg-slate-900 rounded-3xl border border-slate-800/80 overflow-hidden relative shadow-xl">
+              <div ref={step2Ref} className="bg-[#0a4843] rounded-3xl border border-teal-500/20 overflow-hidden relative shadow-xl">
                 
                 {/* Visual Step Banner Indicator */}
                 <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-800/60 flex items-center gap-2.5 sm:gap-4">
@@ -1219,7 +1239,7 @@ ${instructionsText}`;
               </div>
 
               {/* STEP 4: PAYMENT OPTIONS SELECT */}
-              <div ref={step3Ref} className="bg-slate-900 rounded-3xl border border-slate-800/80 overflow-hidden relative shadow-xl">
+              <div ref={step3Ref} className="bg-[#0a4843] rounded-3xl border border-teal-500/20 overflow-hidden relative shadow-xl">
                 
                 {/* Visual Step Banner Indicator */}
                 <div className="bg-gradient-to-r from-indigo-950 to-slate-900 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-800/60 flex items-center gap-2.5 sm:gap-4">
@@ -1279,7 +1299,7 @@ ${instructionsText}`;
             {/* RIGHT COLUMN: SINGLE-PAGE ESTIMATION & ACTIONS CHECKOUT PANEL */}
             <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
               
-              <div className="bg-slate-900 rounded-3xl border border-slate-800/80 p-4 sm:p-6 shadow-2xl relative overflow-hidden">
+              <div className="bg-[#0a4843] rounded-3xl border border-teal-500/20 p-4 sm:p-6 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
                 
                 <h3 className="text-sm font-extrabold tracking-wider text-indigo-400 font-mono uppercase border-b border-indigo-950 pb-3">
